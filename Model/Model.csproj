@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <RootNamespace>MrMeeseeks.NonogramSolver.Model</RootNamespace>
+        <AssemblyName>$(RootNamespace)</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MinVer" Version="2.4.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="morelinq" Version="3.3.2" />
+      <PackageReference Include="MrMeeseeks" Version="69.0.16" />
+      <PackageReference Include="MrMeeseeks.Windows" Version="69.0.16" />
+    </ItemGroup>
+
+</Project>

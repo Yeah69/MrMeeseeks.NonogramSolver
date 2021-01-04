@@ -1,0 +1,248 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModel="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="MrMeeseeks.NonogramSolver.View.MainWindow"
+        Title="Mr. Meeseeks - Nonogram Solver"
+        d:DataContext="{d:DesignInstance viewModel:IMainWindowViewModel}">
+    <Window.DataTemplates>
+        <DataTemplate DataType="{x:Type viewModel:IGameEditorViewModel}">
+            <Grid x:Name="GameRoot" ColumnDefinitions="Auto,*" RowDefinitions="Auto,*" IsSharedSizeScope="True">
+                <Grid Grid.Column="0" Grid.Row="0" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+                    <Button Grid.Column="1" Grid.Row="0" Content="+" Command="{Binding Columns.Add}" />
+                    <Button Grid.Column="0" Grid.Row="1" Content="+" Command="{Binding Rows.Add}" />
+                </Grid>
+                <ItemsControl Grid.Column="1" Grid.Row="0" Items="{Binding Columns.Collection}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid VerticalAlignment="Stretch">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition SharedSizeGroup="CellSize" />
+                                </Grid.ColumnDefinitions>
+                                <DockPanel VerticalAlignment="Stretch" LastChildFill="True">
+                                    <Button DockPanel.Dock="Top" 
+                                            Content="+" 
+                                            Command="{Binding Segments.Add}" />
+                                    <Button DockPanel.Dock="Bottom" 
+                                            Content="-" 
+                                            Command="{Binding RemoveFromParentAsColumn}"
+                                            Background="{x:Static Brushes.IndianRed}" />
+                                    <ItemsControl DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Items="{Binding Segments.Collection}" />
+                                </DockPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl Grid.Column="0" Grid.Row="1" Items="{Binding Rows.Collection}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid HorizontalAlignment="Stretch">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition SharedSizeGroup="CellSize" />
+                                </Grid.RowDefinitions>
+                                <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                                    <Button DockPanel.Dock="Left" 
+                                            Content="+" 
+                                            Command="{Binding Segments.Add}" />
+                                    <Button DockPanel.Dock="Right" 
+                                            Content="-" 
+                                            Command="{Binding RemoveFromParentAsRow}"
+                                            Background="{x:Static Brushes.IndianRed}" />
+                                    <ItemsControl DockPanel.Dock="Right" HorizontalAlignment="Right" Items="{Binding Segments.Collection}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </DockPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:IGameViewModel}">
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,*" IsSharedSizeScope="True">
+                <ItemsControl Grid.Column="0" Grid.Row="0" Margin="2" Items="{Binding Cells}" Background="{x:Static Brushes.White}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="{Binding ColumnCount}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type viewModel:ICellViewModel}">
+                            <Grid Background="{x:Static Brushes.Black}"
+                                  IsVisible="{Binding IsMarked}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl Grid.Column="1" 
+                              Grid.Row="0" 
+                              Items="{Binding Columns}"
+                              Background="{x:Static Brushes.LightGray}"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ItemsControl Margin="1" Items="{Binding}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Stretch">
+                                            <ItemsControl VerticalAlignment="Bottom" Items="{Binding Segments}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl Grid.Column="0" 
+                              Grid.Row="1" 
+                              Items="{Binding Rows}"
+                              Background="{x:Static Brushes.LightGray}"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ItemsControl Margin="1" Items="{Binding}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid HorizontalAlignment="Stretch">
+                                            <ItemsControl HorizontalAlignment="Right" Items="{Binding Segments}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                            </ItemsControl>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl Grid.Column="1" 
+                              Grid.Row="1" 
+                              Items="{Binding CellBlocks}" 
+                              HorizontalAlignment="Left" 
+                              VerticalAlignment="Top">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="{Binding BlockColumnCount}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ItemsControl Margin="1" 
+                                          Background="{x:Static Brushes.Gray}"
+                                          Items="{Binding Cells}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Top">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="{Binding ColumnCount}" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:ISegmentEditorViewModel}">
+            <StackPanel Orientation="Horizontal">
+                <TextBox Text="{Binding Length}" />
+                <Button Content="-" 
+                        Command="{Binding RemoveFromParent}"
+                        Background="{x:Static Brushes.IndianRed}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:ISegmentViewModel}">
+            <Grid Background="{x:Static Brushes.Gray}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="CellSize" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition SharedSizeGroup="CellSize" />
+                </Grid.RowDefinitions>
+                <Grid Margin="1">
+                    <TextBlock Text="{Binding Length}" 
+                               Background="{x:Static Brushes.Black}" 
+                               TextAlignment="Center"
+                               FontSize="15"
+                               MinWidth="15" />
+                </Grid>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:ICellViewModel}">
+            <Grid Background="{x:Static Brushes.Gray}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="CellSize" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition SharedSizeGroup="CellSize" />
+                </Grid.RowDefinitions>
+                <Grid Margin="1" Background="{x:Static Brushes.White}">
+                    <Path Margin="2" 
+                          StrokeThickness="2" 
+                          Stroke="{x:Static Brushes.Black}"
+                          Stretch="Fill"
+                          IsVisible="{Binding IsExcluded}">
+                        <Path.Data>
+                            <PathGeometry>
+                                <PathGeometry.Figures>
+                                    <PathFigure StartPoint="0,0">
+                                        <PathFigure.Segments>
+                                            <LineSegment Point="1,1" />
+                                        </PathFigure.Segments>
+                                    </PathFigure>
+                                    <PathFigure StartPoint="1,0">
+                                        <PathFigure.Segments>
+                                            <LineSegment Point="0,1" />
+                                        </PathFigure.Segments>
+                                    </PathFigure>
+                                </PathGeometry.Figures>
+                            </PathGeometry>
+                        </Path.Data>
+                    </Path>
+                    <Grid Margin="2"
+                          Background="{x:Static Brushes.Black}"
+                          IsVisible="{Binding IsMarked}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+    </Window.DataTemplates>
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal">
+            <Button Content="Build" Command="{Binding Build}" />
+            <Button Content="Save" Command="{Binding Save}" />
+            <Button Content="Load" Command="{Binding Load}" />
+            <Button Content="Solve" Command="{Binding Solve}" />
+        </StackPanel>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto">
+            <ContentControl DockPanel.Dock="Top"
+                            Content="{Binding}" 
+                            DataContext="{Binding Content}" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>

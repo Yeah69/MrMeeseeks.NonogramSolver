@@ -1,8 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Logging.Serilog;
-using MrMeeseeks.NonogramSolver.Root;
 
-namespace MrMeeseeks.NonogramSolver.View
+namespace MrMeeseeks.NonogramSolver.Root
 {
     class Program
     {

@@ -5,11 +5,11 @@ using System.Reflection;
 using AssemblyInfo = MrMeeseeks.NonogramSolver.ViewModel.AssemblyInfo;
 using Module = Autofac.Module;
 
-namespace MrMeeseeks.NonogramSolver.DI
+namespace MrMeeseeks.NonogramSolver.DependencyInjection
 {
-    public class AutofacModule : Module
+    internal class AutofacModule : Module
     {
-        public static MainWindow Start()
+        internal static MainWindow Start()
         {
             var builder = new ContainerBuilder();
             builder.RegisterModule(new AutofacModule());

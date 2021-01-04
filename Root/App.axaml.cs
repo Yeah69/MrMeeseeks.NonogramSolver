@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using MrMeeseeks.NonogramSolver.DI;
+using MrMeeseeks.NonogramSolver.DependencyInjection;
 
 namespace MrMeeseeks.NonogramSolver.Root
 {
@@ -16,7 +16,7 @@ namespace MrMeeseeks.NonogramSolver.Root
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = AutofacModule.Start();
+                desktop.MainWindow = CompositionRoot.Start();
             }
 
             base.OnFrameworkInitializationCompleted();

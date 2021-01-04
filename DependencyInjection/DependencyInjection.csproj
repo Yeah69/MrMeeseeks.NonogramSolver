@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <RootNamespace>MrMeeseeks.NonogramSolver.DI</RootNamespace>
+        <RootNamespace>MrMeeseeks.NonogramSolver.DependencyInjection</RootNamespace>
         <AssemblyName>$(RootNamespace)</AssemblyName>
     </PropertyGroup>
 

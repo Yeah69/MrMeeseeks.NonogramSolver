@@ -17,6 +17,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         void DoTheMatchThing();
         void InitializeAssignments();
         void TryToAssignUnassigned();
+        IReadOnlyList<ISegment> GetPossibleSegments(int index);
     }
 
     internal class Line : ModelLayerBase, ILine
@@ -130,6 +131,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 }
             }
         }
+
+        public IReadOnlyList<ISegment> GetPossibleSegments(int index) => 
+            _cellsToPossibleSegments[index].ToReadOnlyList();
 
         private void CheckAndMarkSuitableNeighbors(ICell seed, ISegment segment)
         {

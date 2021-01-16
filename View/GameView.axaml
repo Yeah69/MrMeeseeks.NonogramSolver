@@ -26,6 +26,18 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type solving:ICellViewModel}">
             <Grid Background="{x:Static Brushes.Gray}">
+                <ToolTip.Tip>
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto" DataContext="{Binding ToolTip}">
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="X:" />
+                        <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding X}" />
+                        <TextBlock Grid.Column="0" Grid.Row="1" Text="Y:" />
+                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Y}" />
+                        <TextBlock Grid.Column="0" Grid.Row="2" Text="C:" />
+                        <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding PossibleColumnSegments}" />
+                        <TextBlock Grid.Column="0" Grid.Row="3" Text="R:" />
+                        <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding PossibleRowSegments}" />
+                    </Grid>
+                </ToolTip.Tip>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="CellSize" />
                 </Grid.ColumnDefinitions>
@@ -33,7 +45,7 @@
                     <RowDefinition SharedSizeGroup="CellSize" />
                 </Grid.RowDefinitions>
                 <Grid Margin="1" Background="{x:Static Brushes.White}">
-                    <Path Margin="2" 
+                    <Path Margin="2"
                           StrokeThickness="2" 
                           Stroke="{x:Static Brushes.Black}"
                           Stretch="Fill"

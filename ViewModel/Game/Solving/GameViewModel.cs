@@ -40,7 +40,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
             
             // dependencies
             Func<ILine, ILineViewModel> lineEditorViewModelFactory,
-            Func<ICell, ICellViewModel> cellViewModelFactory,
+            Func<ICell, (ILine Column, ILine Row), ICellViewModel> cellViewModelFactory,
             Func<IGameEditor> gameEditorFactory,
             Func<IGameEditor, IGameEditorViewModel> gameEditorViewModelFactory,
             Func<IReadOnlyList<ICellViewModel>, int, ICellBlockViewModel> cellBlockViewModelFactory)
@@ -56,7 +56,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 
             Cells = model
                 .Cells
-                .Select(cellViewModelFactory)
+                .Select(c => cellViewModelFactory(c, (model.Columns[c.X], model.Rows[c.Y])))
                 .ToReadOnlyList();
 
             ColumnCount = model.Columns.Count;

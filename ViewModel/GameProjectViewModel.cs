@@ -85,14 +85,14 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
 
         public void CreateNewGame()
         {
-#pragma warning disable 4014 *** Fire and forget is intended
+#pragma warning disable 4014 // Fire and forget is intended
             TriggerEditing(_gameEditorViewModelFactory(_gameEditorFactory()));
 #pragma warning restore 4014
         }
 
         public void CopyAndEdit(IGameViewModel game)
         {
-#pragma warning disable 4014 *** Fire and forget is intended
+#pragma warning disable 4014 // Fire and forget is intended
             TriggerEditing(game.CreateEditableCopy());
 #pragma warning restore 4014
         }

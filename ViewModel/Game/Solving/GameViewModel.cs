@@ -14,7 +14,9 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
     {
         string Name { get; }
         IReadOnlyList<IReadOnlyList<ILineViewModel>> Columns { get; }
+        IReadOnlyList<int> ColumnsFiveStepHints { get; }
         IReadOnlyList<IReadOnlyList<ILineViewModel>> Rows { get; }
+        IReadOnlyList<int> RowsFiveStepHints { get; }
         IReadOnlyList<ICellViewModel> Cells { get; }
         IReadOnlyList<ICellBlockViewModel> CellBlocks { get; }
         int ColumnCount { get; }
@@ -87,11 +89,22 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 
             CellBlocks = cellBlocks.ToReadOnlyList();
 
+            ColumnsFiveStepHints = GenerateFiveStepHints(Columns);
+
+            RowsFiveStepHints = GenerateFiveStepHints(Rows);
+
             static int CalculateBlockLength(int lineCount) => lineCount / 5 + (lineCount % 5 == 0 ? 0 : 1);
 
             static int CalculateLimitOffset(int value, int lineCount) => value == lineCount / 5 && lineCount % 5 > 0 
                 ? lineCount % 5 
                 : 5;
+            
+            IReadOnlyList<int> GenerateFiveStepHints(IReadOnlyList<IReadOnlyList<ILineViewModel>> source) =>
+                source
+                    .Where(lines => lines.Count == 5)
+                    .Scan(0, (acc, _) => acc + 5)
+                    .Skip(1)
+                    .ToReadOnlyList();
             
             IReadOnlyList<IReadOnlyList<ILineViewModel>> GenerateLineHeaders(IReadOnlyList<ILine> source) =>
                 source
@@ -103,8 +116,10 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 
         public string Name => _model.Name;
         public IReadOnlyList<IReadOnlyList<ILineViewModel>> Columns { get; }
+        public IReadOnlyList<int> ColumnsFiveStepHints { get; }
 
         public IReadOnlyList<IReadOnlyList<ILineViewModel>> Rows { get; }
+        public IReadOnlyList<int> RowsFiveStepHints { get; }
         public IReadOnlyList<ICellViewModel> Cells { get; }
         public IReadOnlyList<ICellBlockViewModel> CellBlocks { get; }
         public int ColumnCount { get; }

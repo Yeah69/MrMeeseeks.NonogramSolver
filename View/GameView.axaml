@@ -62,8 +62,14 @@
             </Grid>
         </DataTemplate>
     </UserControl.DataTemplates>
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,*" IsSharedSizeScope="True">
-        <ItemsControl Grid.Column="0" Grid.Row="0" Margin="2" Items="{Binding Cells}" Background="{x:Static Brushes.White}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid ColumnDefinitions="Auto,Auto,*" RowDefinitions="Auto,Auto,*" IsSharedSizeScope="True">
+        <ItemsControl Grid.Column="0"
+                      Grid.Row="0"
+                      Grid.ColumnSpan="2"
+                      Grid.RowSpan="2"
+                      Margin="2" 
+                      Items="{Binding Cells}"
+                      Background="{x:Static Brushes.White}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <UniformGrid Columns="{Binding ColumnCount}" />
@@ -76,7 +82,7 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <ItemsControl Grid.Column="1" 
+        <ItemsControl Grid.Column="2" 
                       Grid.Row="0" 
                       Items="{Binding Columns}"
                       Background="{x:Static Brushes.LightGray}"
@@ -107,7 +113,7 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
         <ItemsControl Grid.Column="0" 
-                      Grid.Row="1" 
+                      Grid.Row="2" 
                       Items="{Binding Rows}"
                       Background="{x:Static Brushes.LightGray}"
                       HorizontalAlignment="Left"
@@ -132,8 +138,59 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <ItemsControl Grid.Column="1" 
+        <ItemsControl Grid.Column="2" 
                       Grid.Row="1" 
+                      Items="{Binding ColumnsFiveStepHints}"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Top">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition SharedSizeGroup="CellSize" />
+                            <ColumnDefinition SharedSizeGroup="CellSize" />
+                            <ColumnDefinition SharedSizeGroup="CellSize" />
+                            <ColumnDefinition SharedSizeGroup="CellSize" />
+                            <ColumnDefinition SharedSizeGroup="CellSize" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition SharedSizeGroup="FiveStepHintSize" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.ColumnSpan="5" Text="{Binding}" TextAlignment="Right" HorizontalAlignment="Right" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ItemsControl Grid.Column="1" 
+                      Grid.Row="2" 
+                      Items="{Binding RowsFiveStepHints}"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Top">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition SharedSizeGroup="CellSize" />
+                            <RowDefinition SharedSizeGroup="CellSize" />
+                            <RowDefinition SharedSizeGroup="CellSize" />
+                            <RowDefinition SharedSizeGroup="CellSize" />
+                            <RowDefinition SharedSizeGroup="CellSize" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition SharedSizeGroup="FiveStepHintSize" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.RowSpan="5" Text="{Binding}" TextAlignment="Right" VerticalAlignment="Bottom" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ItemsControl Grid.Column="2" 
+                      Grid.Row="2" 
                       Items="{Binding CellBlocks}" 
                       HorizontalAlignment="Left" 
                       VerticalAlignment="Top">

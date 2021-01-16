@@ -32,7 +32,12 @@ namespace MrMeeseeks.NonogramSolver.Model.Game
         
         public ReadOnlyObservableCollection<IGame> Games { get; }
         
-        public void Add(IGame game) => _games.Add(game);
+        public void Add(IGame game)
+        {
+            _games.Add(game);
+            game.Save();
+        }
+
         public void Delete(IGame game)
         {
             _games.Remove(game);

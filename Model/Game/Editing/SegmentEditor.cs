@@ -1,6 +1,7 @@
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
 using System;
 
-namespace MrMeeseeks.NonogramSolver.Model
+namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
 {
     public interface ISegmentEditor : IModelLayerBase
     {

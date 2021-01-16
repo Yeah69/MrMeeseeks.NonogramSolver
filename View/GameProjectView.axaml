@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModel="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             xmlns:view="clr-namespace:MrMeeseeks.NonogramSolver.View"
+             xmlns:editing="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             xmlns:solving="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel.Game.Solving;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MrMeeseeks.NonogramSolver.View.GameProjectView"
+             x:Name="This"
+             d:DataContext="{d:DesignInstance viewModel:IGameProjectViewModel}">
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="{x:Type editing:IGameEditorViewModel}">
+            <view:GameEditorView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type solving:IGameViewModel}">
+            <view:GameView />
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <Grid>
+        <DockPanel LastChildFill="True" IsVisible="{Binding IsGamesVisible}">
+            <DockPanel DockPanel.Dock="Left"
+                       LastChildFill="True">
+                <Button DockPanel.Dock="Top" Content="Create New" Command="{Binding CreateNewGame}" />
+                <ListBox DockPanel.Dock="Bottom"
+                         Items="{Binding Games}"
+                         SelectionMode="Single"
+                         SelectedItem="{Binding SelectedGame}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}">
+                                <TextBlock.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Edit A Copy"
+                                                  Command="{Binding DataContext.CopyAndEdit, ElementName=This}" 
+                                                  CommandParameter="{Binding}" />
+                                        <MenuItem Header="Delete" Command="{Binding Delete}" />
+                                    </ContextMenu>
+                                </TextBlock.ContextMenu>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <ContentControl DockPanel.Dock="Right"
+                            Content="{Binding}" 
+                            DataContext="{Binding SelectedGame}" />
+        </DockPanel>
+        <ContentControl Content="{Binding}" 
+                        DataContext="{Binding Editor}"
+                        IsVisible="{Binding DataContext.IsEditorVisible, ElementName=This}"/>
+    </Grid>
+</UserControl>

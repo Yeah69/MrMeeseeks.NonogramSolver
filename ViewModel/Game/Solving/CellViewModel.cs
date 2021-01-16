@@ -1,9 +1,9 @@
-using System;
-using MrMeeseeks.NonogramSolver.Model;
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
 using MrMeeseeks.Reactive.Extensions;
+using System;
 using System.Reactive.Disposables;
 
-namespace MrMeeseeks.NonogramSolver.ViewModel
+namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 {
     public interface ICellViewModel : IViewModelLayerBase
     {

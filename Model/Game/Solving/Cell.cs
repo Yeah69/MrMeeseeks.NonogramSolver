@@ -1,6 +1,6 @@
 using System;
 
-namespace MrMeeseeks.NonogramSolver.Model
+namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
     public enum CellState { Undecided, Excluded, Marked }
     

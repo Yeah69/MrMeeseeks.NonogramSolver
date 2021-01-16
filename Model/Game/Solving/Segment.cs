@@ -1,7 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace MrMeeseeks.NonogramSolver.Model
+namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
     public interface ISegment : IModelLayerBase
     {

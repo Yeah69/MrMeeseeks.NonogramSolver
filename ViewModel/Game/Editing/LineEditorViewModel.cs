@@ -1,8 +1,8 @@
-using MrMeeseeks.NonogramSolver.Model;
+using MrMeeseeks.NonogramSolver.Model.Game.Editing;
 using System;
 using System.Reactive.Disposables;
 
-namespace MrMeeseeks.NonogramSolver.ViewModel
+namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Editing
 {
     public interface ILineEditorViewModel : IViewModelLayerBase
     {

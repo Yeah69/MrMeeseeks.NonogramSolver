@@ -11,6 +11,18 @@
         <DependentUpon>MainWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="GameEditorView.axaml.cs">
+        <DependentUpon>MainWindow - Copy.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="GameView.axaml.cs">
+        <DependentUpon>GameEditorView - Copy.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="GameProjectView.axaml.cs">
+        <DependentUpon>GameProjectView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

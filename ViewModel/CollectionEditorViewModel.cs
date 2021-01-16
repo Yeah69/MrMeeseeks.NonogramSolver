@@ -1,23 +1,23 @@
 using DynamicData;
 using DynamicData.Binding;
 using MrMeeseeks.Reactive.Extensions;
-using MrMeeseeks.Windows;
 using System;
 using System.Collections.ObjectModel;
 using System.Reactive.Disposables;
-using System.Windows.Input;
 
 namespace MrMeeseeks.NonogramSolver.ViewModel
 {
     public interface ICollectionEditorViewModel<TViewModel>
     {
         ReadOnlyObservableCollection<TViewModel> Collection { get; }
-        ICommand Add { get; }
-        ICommand Remove { get; }
+        void Add();
+        void Remove(TViewModel viewModel);
     }
 
     internal class CollectionEditorViewModel<TModel, TViewModel> : ICollectionEditorViewModel<TViewModel>
     {
+        private readonly Action _addAction;
+        private readonly Action<TViewModel> _removeAction;
 
         public CollectionEditorViewModel(
             // parameters
@@ -29,6 +29,8 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
             // dependencies
             CompositeDisposable compositeDisposable)
         {
+            _addAction = addAction;
+            _removeAction = removeAction;
             modelCollection
                 .ToObservableChangeSet()
                 .Transform(viewModelFactory)
@@ -36,30 +38,12 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
                 .Subscribe()
                 .CompositeDisposalWith(compositeDisposable);
             Collection = collection;
-            
-            var addSegment = RxCommand
-                .CanAlwaysExecute()
-                .CompositeDisposalWith(compositeDisposable);
-            addSegment
-                .Observe
-                .Subscribe(_ => addAction())
-                .CompositeDisposalWith(compositeDisposable);
-            Add = addSegment;
-            
-            var removeSegment = RxCommand
-                .CanAlwaysExecute()
-                .CompositeDisposalWith(compositeDisposable);
-            removeSegment
-                .ObserveOfType<TViewModel>()
-                .Subscribe(removeAction)
-                .CompositeDisposalWith(compositeDisposable);
-            Remove = removeSegment;
         }
 
         public ReadOnlyObservableCollection<TViewModel> Collection { get; }
-        
-        public ICommand Add { get; }
-        
-        public ICommand Remove { get; }
+
+        public void Add() => _addAction();
+
+        public void Remove(TViewModel viewModel) => _removeAction(viewModel);
     }
 }

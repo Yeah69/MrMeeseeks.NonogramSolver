@@ -1,10 +1,10 @@
 using MrMeeseeks.Extensions;
-using MrMeeseeks.NonogramSolver.Model;
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MrMeeseeks.NonogramSolver.ViewModel
+namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 {
     public interface ILineViewModel : IViewModelLayerBase
     {

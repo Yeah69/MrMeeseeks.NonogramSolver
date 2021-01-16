@@ -1,10 +1,11 @@
 using MrMeeseeks.Extensions;
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace MrMeeseeks.NonogramSolver.Model
+namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
 {
     public interface ILineEditor : IModelLayerBase
     {

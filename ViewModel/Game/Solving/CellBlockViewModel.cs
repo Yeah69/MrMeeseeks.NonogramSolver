@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace MrMeeseeks.NonogramSolver.ViewModel
+namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 {
     public interface ICellBlockViewModel
     {

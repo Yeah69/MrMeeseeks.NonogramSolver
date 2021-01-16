@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace MrMeeseeks.NonogramSolver.Model
+namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
     public interface ILine : IModelLayerBase
     {

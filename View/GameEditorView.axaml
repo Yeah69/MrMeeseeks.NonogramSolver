@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModel="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             xmlns:editing="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MrMeeseeks.NonogramSolver.View.GameEditorView"
+             d:DataContext="{d:DesignInstance editing:IGameEditorViewModel}">
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="{x:Type editing:ISegmentEditorViewModel}">
+            <StackPanel Orientation="Horizontal">
+                <TextBox Text="{Binding Length}" />
+                <Button Content="-" 
+                        Command="{Binding RemoveFromParent}"
+                        Background="{x:Static Brushes.IndianRed}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Name:" Margin="5, 2" VerticalAlignment="Center" FontSize="20" />
+            <TextBox Text="{Binding Name}" Margin="5, 2" FontSize="20" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+            <Button Content="Okay" Command="{Binding Okay}" />
+            <Button Content="Cancel" Command="{Binding Cancel}" />
+        </StackPanel>
+        <Grid x:Name="GameRoot" DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*" RowDefinitions="Auto,*" IsSharedSizeScope="True">
+            <Grid Grid.Column="0" Grid.Row="0" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+                <Button Grid.Column="1" Grid.Row="0" Content="+" Command="{Binding Columns.Add}" />
+                <Button Grid.Column="0" Grid.Row="1" Content="+" Command="{Binding Rows.Add}" />
+            </Grid>
+            <ItemsControl Grid.Column="1" Grid.Row="0" Items="{Binding Columns.Collection}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid VerticalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition SharedSizeGroup="CellSize" />
+                            </Grid.ColumnDefinitions>
+                            <DockPanel VerticalAlignment="Stretch" LastChildFill="True">
+                                <Button DockPanel.Dock="Top" 
+                                        Content="+" 
+                                        Command="{Binding Segments.Add}" />
+                                <Button DockPanel.Dock="Bottom" 
+                                        Content="-" 
+                                        Command="{Binding RemoveFromParentAsColumn}"
+                                        Background="{x:Static Brushes.IndianRed}" />
+                                <ItemsControl DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Items="{Binding Segments.Collection}" />
+                            </DockPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl Grid.Column="0" Grid.Row="1" Items="{Binding Rows.Collection}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid HorizontalAlignment="Stretch">
+                            <Grid.RowDefinitions>
+                                <RowDefinition SharedSizeGroup="CellSize" />
+                            </Grid.RowDefinitions>
+                            <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                                <Button DockPanel.Dock="Left" 
+                                        Content="+" 
+                                        Command="{Binding Segments.Add}" />
+                                <Button DockPanel.Dock="Right" 
+                                        Content="-" 
+                                        Command="{Binding RemoveFromParentAsRow}"
+                                        Background="{x:Static Brushes.IndianRed}" />
+                                <ItemsControl DockPanel.Dock="Right" HorizontalAlignment="Right" Items="{Binding Segments.Collection}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </DockPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </DockPanel>
+</UserControl>

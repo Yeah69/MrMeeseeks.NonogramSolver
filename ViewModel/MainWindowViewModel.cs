@@ -1,114 +1,107 @@
-using MrMeeseeks.NonogramSolver.Model;
+using MrMeeseeks.NonogramSolver.Model.Settings;
 using System;
-using MrMeeseeks.Reactive.Extensions;
-using MrMeeseeks.Windows;
+using System.Collections.Generic;
 using System.IO;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Windows.Input;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MrMeeseeks.NonogramSolver.ViewModel
 {
     public interface IMainWindowViewModel : IViewModelLayerBase
     {
-        IViewModelLayerBase Content { get; }
-        ICommand Build { get; }
-        ICommand Save { get; }
-        ICommand Load { get; }
-        ICommand Solve { get; }
+        string Title { get; }
+        IGameProjectViewModelBase Content { get; }
+        Task New();
+        Task Open();
     }
 
     internal class MainWindowViewModel : ViewModelLayerBase, IMainWindowViewModel
     {
-        private IViewModelLayerBase _content;
+        private IGameProjectViewModelBase _content;
+        private readonly ICurrentSettings _currentSettings;
+        private readonly IMainWindowSaveFileDialog _mainWindowSaveFileDialog;
+        private readonly IMainWindowOpenFileDialog _mainWindowOpenFileDialog;
+        private readonly Func<string, IGameProjectViewModel> _gameProjectViewModelFactory;
 
         public MainWindowViewModel(
-            // parameters
-            IGameEditorViewModel gameEditorViewModel,
-            
-            // dependencies
-            ILoadGame loadGame,
-            Func<IGame, IGameViewModel> gameViewModelFactory,
-            CompositeDisposable compositeDisposable)
+            IEmptyGameProjectViewModel emptyGameProjectViewModel,
+            ICurrentSettings currentSettings,
+            IMainWindowSaveFileDialog mainWindowSaveFileDialog,
+            IMainWindowOpenFileDialog mainWindowOpenFileDialog,
+            Func<string, IGameProjectViewModel> gameProjectViewModelFactory)
         {
-            _content = gameEditorViewModel;
-
-            var build = RxCommand
-                .CallerDeterminedCanExecute(
-                    this.ObservePropertyChanged(nameof(Content))
-                        .Select(_ => Content is IGameEditorViewModel),
-                    true)
-                .CompositeDisposalWith(compositeDisposable);
-            build
-                .Observe
-                .Subscribe(_ =>
-                {
-                    if (Content is IGameEditorViewModel gevm)
-                        Content = gevm.BuildGame();
-                })
-                .CompositeDisposalWith(compositeDisposable);
-            Build = build;
-
-            var save = RxCommand
-                .CallerDeterminedCanExecute(
-                    this.ObservePropertyChanged(nameof(Content))
-                        .Select(_ => Content is IGameViewModel),
-                    false)
-                .CompositeDisposalWith(compositeDisposable);
-            save
-                .Observe
-                .Subscribe(_ =>
-                {
-                    if (Content is IGameViewModel gvm)
-                        gvm.SaveGame();
-                })
-                .CompositeDisposalWith(compositeDisposable);
-            Save = save;
-
-            var load = RxCommand
-                .CanAlwaysExecute()
-                .CompositeDisposalWith(compositeDisposable);
-            load
-                .Observe
-                .Subscribe(_ => 
-                    Content = gameViewModelFactory(
-                        loadGame.Load(
-                            Path.Combine(
-                                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                                "MrMeeseeksNonogramSolver",
-                                "SaveGame.json"))))
-                .CompositeDisposalWith(compositeDisposable);
-            Load = load;
-
-            var solve = RxCommand
-                .CallerDeterminedCanExecute(
-                    this.ObservePropertyChanged(nameof(Content))
-                        .Select(_ => Content is IGameViewModel),
-                    false)
-                .CompositeDisposalWith(compositeDisposable);
-            solve
-                .Observe
-                .Subscribe(_ =>
-                {
-                    if (Content is IGameViewModel gvm)
-                        gvm.Solve();
-                })
-                .CompositeDisposalWith(compositeDisposable);
-            Solve = solve;
+            _content = emptyGameProjectViewModel;
+            _currentSettings = currentSettings;
+            _mainWindowSaveFileDialog = mainWindowSaveFileDialog;
+            _mainWindowOpenFileDialog = mainWindowOpenFileDialog;
+            _gameProjectViewModelFactory = gameProjectViewModelFactory;
+            
+            if(File.Exists(currentSettings.Value.LastOpenFileName))
+                Content = _gameProjectViewModelFactory(currentSettings.Value.LastOpenFileName ?? "");
         }
 
-        public IViewModelLayerBase Content
+        public string Title =>
+            $"Mr. Meeseeks - Nonogram Solver{(this.Content is IGameProjectViewModel {Name: { } name} ? $" - {name}" : "")}";
+
+        public IGameProjectViewModelBase Content
         {
             get => _content;
-            private set => SetIfChangedAndRaise(ref _content, value);
+            private set
+            {
+                SetIfChangedAndRaise(ref _content, value);
+                OnPropertyChanged(nameof(Title));
+            }
         }
-        
-        public ICommand Build { get; }
-        
-        public ICommand Save { get; }
-        
-        public ICommand Load { get; }
 
-        public ICommand Solve { get; }
+        public async Task New()
+        {
+            var initialFileName = "game.db";
+            var directory = Environment.CurrentDirectory;
+            if (_currentSettings.Value.LastOpenFileName is { } fileName)
+            {
+                FileInfo fileInfo = new(fileName);
+                if (fileInfo.Exists)
+                {
+                    initialFileName = fileInfo.Name;
+                    directory = fileInfo.DirectoryName ?? "";
+                }
+            }
+            var path = await _mainWindowSaveFileDialog.Show(
+                "Create new game database",
+                directory,
+                initialFileName,
+                "db",
+                ("LiteDb", new List<string> {"db"}));
+            if (path is null) return;
+            Content = _gameProjectViewModelFactory(path);
+            _currentSettings.Value.LastOpenFileName = path;
+        }
+
+        public async Task Open()
+        {
+            var initialFileName = "game.db";
+            var directory = Environment.CurrentDirectory;
+            if (_currentSettings.Value.LastOpenFileName is { } fileName)
+            {
+                FileInfo fileInfo = new(fileName);
+                if (fileInfo.Exists)
+                {
+                    initialFileName = fileInfo.Name;
+                    directory = fileInfo.DirectoryName ?? "";
+                }
+            }
+            var paths = await _mainWindowOpenFileDialog.Show(
+                "Load game database",
+                directory,
+                initialFileName,
+                false,
+                ("LiteDb", new List<string> {"db"}));
+            if (paths.Length == 1)
+            {
+                var chosenFileName = paths.First();
+                Content = _gameProjectViewModelFactory(chosenFileName);
+                _currentSettings.Value.LastOpenFileName = chosenFileName;
+            }
+        }
     }
 }

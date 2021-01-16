@@ -12,9 +12,9 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="MrMeeseeks" Version="69.0.16" />
-      <PackageReference Include="MrMeeseeks.Reactive" Version="69.0.16" />
-      <PackageReference Include="MrMeeseeks.Windows" Version="69.0.16" />
+      <PackageReference Include="MrMeeseeks" Version="69.0.17" />
+      <PackageReference Include="MrMeeseeks.Reactive" Version="69.0.17" />
+      <PackageReference Include="MrMeeseeks.Windows" Version="69.0.17" />
     </ItemGroup>
 
     <ItemGroup>

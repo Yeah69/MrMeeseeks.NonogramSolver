@@ -1,20 +1,26 @@
-using MrMeeseeks.NonogramSolver.Model;
+using MrMeeseeks.NonogramSolver.Model.Game.Editing;
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
+using MrMeeseeks.Reactive.Extensions;
 using System;
 using System.Reactive.Disposables;
+using System.Threading.Tasks;
 
-namespace MrMeeseeks.NonogramSolver.ViewModel
+namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Editing
 {
     public interface IGameEditorViewModel : IViewModelLayerBase
     {
+        string Name { get; set; }
         ICollectionEditorViewModel<ILineEditorViewModel> Columns { get; }
         ICollectionEditorViewModel<ILineEditorViewModel> Rows { get; }
-        IGameViewModel BuildGame();
+        Task<IGame> Result { get; }
+        void Okay();
+        void Cancel();
     }
 
     public class GameEditorViewModel : ViewModelLayerBase, IGameEditorViewModel
     {
         private readonly IGameEditor _model;
-        private readonly Func<IGame, IGameViewModel> _gameViewModelFactory;
+        private readonly TaskCompletionSource<IGame> _resultSource;
 
         public GameEditorViewModel(
             // parameters
@@ -22,11 +28,9 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
             
             // dependencies
             Func<ILineEditor, IGameEditor, ILineEditorViewModel> lineEditorViewModelFactory,
-            Func<IGame, IGameViewModel> gameViewModelFactory,
             CompositeDisposable compositeDisposable)
         {
             _model = model;
-            _gameViewModelFactory = gameViewModelFactory;
             
             Columns = new CollectionEditorViewModel<ILineEditor, ILineEditorViewModel>(
                 model.Columns,
@@ -41,12 +45,26 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
                 model.AddRow,
                 c => c.RemoveFromParentAsRow(),
                 compositeDisposable);
+
+            _resultSource = new TaskCompletionSource<IGame>();
+            Result = _resultSource.Task;
+
+            this.EscalateNotifications(model, (nameof(model.Name), nameof(Name)))
+                .CompositeDisposalWith(compositeDisposable);
         }
 
+        public string Name
+        {
+            get => _model.Name;
+            set => _model.Name = value;
+        }
         public ICollectionEditorViewModel<ILineEditorViewModel> Columns { get; }
 
         public ICollectionEditorViewModel<ILineEditorViewModel> Rows { get; }
         
-        public IGameViewModel BuildGame() => _gameViewModelFactory(_model.Build());
+        public Task<IGame> Result { get; }
+        public void Okay() => _resultSource.SetResult(_model.Build());
+
+        public void Cancel() => _resultSource.SetCanceled();
     }
 }

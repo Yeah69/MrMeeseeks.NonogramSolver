@@ -1,43 +1,53 @@
 using MoreLinq;
-using System;
 using MrMeeseeks.Extensions;
-using MrMeeseeks.NonogramSolver.Model;
+using MrMeeseeks.NonogramSolver.Model.Game;
+using MrMeeseeks.NonogramSolver.Model.Game.Editing;
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
+using MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
-namespace MrMeeseeks.NonogramSolver.ViewModel
+namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 {
     public interface IGameViewModel : IViewModelLayerBase
     {
+        string Name { get; }
         IReadOnlyList<IReadOnlyList<ILineViewModel>> Columns { get; }
         IReadOnlyList<IReadOnlyList<ILineViewModel>> Rows { get; }
         IReadOnlyList<ICellViewModel> Cells { get; }
         IReadOnlyList<ICellBlockViewModel> CellBlocks { get; }
         int ColumnCount { get; }
         int BlockColumnCount { get; }
-        void SaveGame();
         void Solve();
+        void Delete();
+        IGameEditorViewModel CreateEditableCopy();
     }
 
     internal class GameViewModel : ViewModelLayerBase, IGameViewModel
     {
         private readonly IGame _model;
-        private readonly ISaveGame _saveGame;
+        private readonly IGameProject _gameProject;
+        private readonly Func<IGameEditor> _gameEditorFactory;
+        private readonly Func<IGameEditor, IGameEditorViewModel> _gameEditorViewModelFactory;
 
         public GameViewModel(
             // parameters
             IGame model,
+            IGameProject gameProject,
             
             // dependencies
-            ISaveGame saveGame,
             Func<ILine, ILineViewModel> lineEditorViewModelFactory,
             Func<ICell, ICellViewModel> cellViewModelFactory,
+            Func<IGameEditor> gameEditorFactory,
+            Func<IGameEditor, IGameEditorViewModel> gameEditorViewModelFactory,
             Func<IReadOnlyList<ICellViewModel>, int, ICellBlockViewModel> cellBlockViewModelFactory)
         {
             _model = model;
-            _saveGame = saveGame;
-            
+            _gameProject = gameProject;
+            _gameEditorFactory = gameEditorFactory;
+            _gameEditorViewModelFactory = gameEditorViewModelFactory;
+
             Columns = GenerateLineHeaders(model.Columns);
             
             Rows = GenerateLineHeaders(model.Rows);
@@ -91,6 +101,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
                     .ToReadOnlyList();
         }
 
+        public string Name => _model.Name;
         public IReadOnlyList<IReadOnlyList<ILineViewModel>> Columns { get; }
 
         public IReadOnlyList<IReadOnlyList<ILineViewModel>> Rows { get; }
@@ -99,13 +110,36 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         public int ColumnCount { get; }
         public int BlockColumnCount { get; }
 
-        public void SaveGame() => _saveGame.Save(
-            _model, 
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "MrMeeseeksNonogramSolver",
-                "SaveGame.json"));
-
         public void Solve() => _model.Solve();
+        public void Delete() => _gameProject.Delete(_model);
+        public IGameEditorViewModel CreateEditableCopy()
+        {
+            var gameEditor = _gameEditorFactory();
+            foreach (var line in _model.Columns)
+            {
+                gameEditor.AddColumn();
+                var column = gameEditor.Columns.Last();
+                SetupLine(line, column);
+            }
+            foreach (var line in _model.Rows)
+            {
+                gameEditor.AddRow();
+                var row = gameEditor.Rows.Last();
+                SetupLine(line, row);
+            }
+
+            gameEditor.Name = $"{_model.Name} Copy";
+
+            return _gameEditorViewModelFactory(gameEditor);
+
+            static void SetupLine(ILine line, ILineEditor lineEditor)
+            {
+                foreach (var segment in line.Segments)
+                {
+                    lineEditor.AddSegment();
+                    lineEditor.Segments.Last().Length = segment.Length;
+                }
+            }
+        }
     }
 }

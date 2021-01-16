@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ViewModel", "ViewModel\View
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Root", "Root\Root.csproj", "{51AA580F-8902-456B-BDF3-78851272FF4E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{A9DBEBE5-56D1-42A6-800B-72C4C898042A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00_SolutionItems", "00_SolutionItems", "{A9DBEBE5-56D1-42A6-800B-72C4C898042A}"
 ProjectSection(SolutionItems) = preProject
 	Directory.Build.props = Directory.Build.props
 EndProjectSection
@@ -19,6 +19,16 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistence", "Persistence\Persistence.csproj", "{93D0438C-C78C-414F-A4AF-2746E8DD9C39}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "View", "View\View.csproj", "{232B4D3C-55A0-4AB3-B83C-0817F81B549C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "10_View", "10_View", "{5361938F-3A5E-4C09-B123-E1EFF4098633}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "11_ViewModel", "11_ViewModel", "{6F3C0A0A-E214-4BDB-B84A-18D1A5957FAA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "12_Model", "12_Model", "{99987CA6-9701-4B5D-A924-5464FEC57339}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "13_Persistence", "13_Persistence", "{4F216E4F-1723-44CE-8292-AD019FA2BF8A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "20_DependencyInjection", "20_DependencyInjection", "{959E0480-BD44-47B3-BA77-66C54E9AF169}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,5 +66,12 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E9F2893-9890-4E88-A854-9597D6BFD9BF}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{232B4D3C-55A0-4AB3-B83C-0817F81B549C} = {5361938F-3A5E-4C09-B123-E1EFF4098633}
+		{138031FB-6A95-4B8F-A654-5190EA82895B} = {6F3C0A0A-E214-4BDB-B84A-18D1A5957FAA}
+		{848174AD-3C93-4F8F-A5B7-EB23D822122D} = {99987CA6-9701-4B5D-A924-5464FEC57339}
+		{93D0438C-C78C-414F-A4AF-2746E8DD9C39} = {4F216E4F-1723-44CE-8292-AD019FA2BF8A}
+		{14DC1902-9611-464A-B6DB-FAECF3EC3D04} = {959E0480-BD44-47B3-BA77-66C54E9AF169}
 	EndGlobalSection
 EndGlobal

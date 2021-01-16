@@ -1,9 +1,8 @@
 using MrMeeseeks.Windows;
-using System.ComponentModel;
 
 namespace MrMeeseeks.NonogramSolver.Model
 {
-    public interface IModelLayerBase : INotifyPropertyChanged
+    public interface IModelLayerBase : IObservableObject
     {
         
     }

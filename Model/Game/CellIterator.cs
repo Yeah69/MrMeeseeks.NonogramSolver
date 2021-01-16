@@ -1,4 +1,6 @@
-namespace MrMeeseeks.NonogramSolver.Model
+using MrMeeseeks.NonogramSolver.Model.Game.Solving;
+
+namespace MrMeeseeks.NonogramSolver.Model.Game
 {
     public interface ICellIterator
     {

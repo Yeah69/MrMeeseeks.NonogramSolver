@@ -1,30 +1,37 @@
 using MrMeeseeks.Extensions;
+using MrMeeseeks.Windows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MrMeeseeks.NonogramSolver.Model
+namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
     public interface IGame : IModelLayerBase
     {
+        string Name { get; }
         IReadOnlyList<ILine> Columns { get; }
         IReadOnlyList<ILine> Rows { get; }
         IReadOnlyList<ICell> Cells { get; }
 
         void Solve();
+
+        void Save();
+        void Delete();
     }
 
-    internal class Game : ModelLayerBase, IGame
+    public abstract class Game : ObservableObject, IGame
     {
         private readonly List<ICell> _cells = new ();
         
         public Game(
             // parameters
+            string name,
             (IReadOnlyList<ILine>, IReadOnlyList<ILine>) columnsAndRows,
             
             // dependencies
             Func<(int, int), ICell> cellFactory)
         {
+            Name = name;
             (Columns, Rows) = columnsAndRows;
             
             Cells = _cells.ToReadOnlyList();
@@ -67,6 +74,8 @@ namespace MrMeeseeks.NonogramSolver.Model
             }
         }
         
+        public string Name { get; }
+        
         public IReadOnlyList<ILine> Columns { get; }
 
         public IReadOnlyList<ILine> Rows { get; }
@@ -108,5 +117,9 @@ namespace MrMeeseeks.NonogramSolver.Model
                 line.TryToAssignUnassigned();
             }
         }
+
+        public abstract void Save();
+
+        public abstract void Delete();
     }
 }

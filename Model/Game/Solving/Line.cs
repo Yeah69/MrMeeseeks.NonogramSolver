@@ -1,9 +1,11 @@
 using MoreLinq;
 using MrMeeseeks.Extensions;
+using MrMeeseeks.Reactive.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reactive.Linq;
 
 namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
@@ -17,14 +19,14 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         void DoTheMatchThing();
         void InitializeAssignments();
         void TryToAssignUnassigned();
-        IReadOnlyList<ISegment> GetPossibleSegments(int index);
+        IReadOnlyList<ISegment> GetPossibleSegments(ICell cell);
     }
 
     internal class Line : ModelLayerBase, ILine
     {
         private readonly ICellIterator _cellIterator;
         private readonly List<ICell> _cells = new();
-        private readonly List<ImmutableHashSet<ISegment>> _cellsToPossibleSegments = new();
+        private readonly Dictionary<ICell, ImmutableHashSet<ISegment>> _cellsToPossibleSegments = new();
         
         public Line(
             IReadOnlyList<ISegment> segments,
@@ -38,6 +40,36 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 : 0;
 
             Cells = _cells.ToReadOnlyList();
+
+            segments
+                .Select(s =>
+                    s.ObservePropertyChanged(nameof(s.Cleared))
+                        .Where(_ => s.Cleared)
+                        .Do(_ =>
+                        {
+                            if (s.CurrentMinCell is {} minCell && cellIterator.Previous(minCell) is {} prevToMinCell)
+                            {
+                                prevToMinCell.Exclude();
+                            }
+                            if (s.CurrentMaxCell is {} maxCell && cellIterator.Next(maxCell) is {} nextToMaxCell)
+                            {
+                                nextToMaxCell.Exclude();
+                            }
+
+                            foreach (var cell in _cellsToPossibleSegments.Keys.Except(s.AssignedCells))
+                            {
+                                _cellsToPossibleSegments[cell] =
+                                    _cellsToPossibleSegments[cell].Except(s.ToEnumerable());
+                                if (_cellsToPossibleSegments[cell].Count == 0 && cell.State == CellState.Undecided)
+                                    cell.Exclude();
+                                if (_cellsToPossibleSegments[cell].Count == 1 
+                                    && cell is {State: CellState.Marked} 
+                                    && cellIterator.Assignment(cell) is null)
+                                    cellIterator.Mark(cell, _cellsToPossibleSegments[cell].First());
+                            }
+                        }))
+                .Merge()
+                .Subscribe();
         }
         
         public IReadOnlyList<ISegment> Segments { get; }
@@ -65,13 +97,13 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 foreach (var j in Enumerable.Range(i, segmentDiff))
                 {
                     _cellIterator.Mark(Cells[j], segment);
-                    _cellsToPossibleSegments[j] = ImmutableHashSet.Create(segment);
+                    _cellsToPossibleSegments[Cells[j]] = ImmutableHashSet.Create(segment);
                 }
                 i += segmentDiff;
                 if (diff == 0 && i < Cells.Count)
                 {
                     Cells[i].Exclude();
-                    _cellsToPossibleSegments[i] = ImmutableHashSet<ISegment>.Empty;
+                    _cellsToPossibleSegments[Cells[i]] = ImmutableHashSet<ISegment>.Empty;
                 }
                 i++;
             }//*/
@@ -99,11 +131,11 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 possibleSegmentsList = possibleSegmentsList.Add(segment);
                 for (int j = i; j < i + segment.Length + 1; j++)
                     if (j < Cells.Count)
-                        _cellsToPossibleSegments.Add(possibleSegmentsList);
+                        _cellsToPossibleSegments.Add(Cells[j], possibleSegmentsList);
                 i += segment.Length + 1;
             }
             for (; i < Cells.Count; i++)
-                _cellsToPossibleSegments.Add(possibleSegmentsList);
+                _cellsToPossibleSegments.Add(Cells[i], possibleSegmentsList);
             
             i = Cells.Count - 1;
             var possibleSegmentsListInverse = ImmutableHashSet.Create<ISegment>();
@@ -112,28 +144,28 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 possibleSegmentsListInverse = possibleSegmentsListInverse.Add(segment);
                 for (int j = i; j > i - segment.Length - 1; j--)
                     if (j >= 0)
-                        _cellsToPossibleSegments[j] = _cellsToPossibleSegments[j].Intersect(possibleSegmentsListInverse);
+                        _cellsToPossibleSegments[Cells[j]] = _cellsToPossibleSegments[Cells[j]].Intersect(possibleSegmentsListInverse);
                 i -= segment.Length + 1;
             }
             for (; i >= 0; i--)
-                _cellsToPossibleSegments[i] = _cellsToPossibleSegments[i].Intersect(possibleSegmentsListInverse);
+                _cellsToPossibleSegments[Cells[i]] = _cellsToPossibleSegments[Cells[i]].Intersect(possibleSegmentsListInverse);
         }
 
         public void TryToAssignUnassigned()
         {
-            for (int i = 0; i < Cells.Count; i++)
+            foreach (var cell in Cells)
             {
-                if (Cells[i].State == CellState.Marked && _cellsToPossibleSegments[i].Count == 1)
+                if (cell.State == CellState.Marked && _cellsToPossibleSegments[cell].Count == 1)
                 {
-                    if (_cellIterator.Assignment(Cells[i]) is {}) continue;
-                    _cellIterator.Mark(Cells[i], _cellsToPossibleSegments[i].First());
-                    CheckAndMarkSuitableNeighbors(Cells[i], _cellsToPossibleSegments[i].First());
+                    if (_cellIterator.Assignment(cell) is {}) continue;
+                    _cellIterator.Mark(cell, _cellsToPossibleSegments[cell].First());
+                    CheckAndMarkSuitableNeighbors(cell, _cellsToPossibleSegments[cell].First());
                 }
             }
         }
 
-        public IReadOnlyList<ISegment> GetPossibleSegments(int index) => 
-            _cellsToPossibleSegments[index].ToReadOnlyList();
+        public IReadOnlyList<ISegment> GetPossibleSegments(ICell cell) => 
+            _cellsToPossibleSegments[cell].ToReadOnlyList();
 
         private void CheckAndMarkSuitableNeighbors(ICell seed, ISegment segment)
         {

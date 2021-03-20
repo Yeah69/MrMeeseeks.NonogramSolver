@@ -35,7 +35,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
             string.Join(
                 ", ", 
                 line
-                    .GetPossibleSegments(index)
+                    .GetPossibleSegments(_cell)
                     .Select(s => (s == _cell.HorizontalAssignment || s == _cell.VerticalAssignment) 
                         ? $"_{s.Length}_" 
                         : s.Length.ToString()));

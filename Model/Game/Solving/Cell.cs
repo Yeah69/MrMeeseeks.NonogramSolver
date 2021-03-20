@@ -59,6 +59,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         private void Mark()
         {
+            if (State == CellState.Marked) return;
             if (State == CellState.Excluded) throw new Exception();
             State = CellState.Marked;
         }
@@ -67,16 +68,70 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         {
             Mark();
             VerticalAssignment = segment;
+            segment.AssignCell(this);
+
+            if (HorizontalAssignment is null)
+            {
+                if (Left is {HorizontalAssignment: {} horizontalAssignmentDown})
+                {
+                    HorizontalAssignment = horizontalAssignmentDown;
+                    horizontalAssignmentDown.AssignCell(this);
+                }
+                else if (Right is {HorizontalAssignment: {} horizontalAssignmentUp})
+                {
+                    HorizontalAssignment = horizontalAssignmentUp;
+                    horizontalAssignmentUp.AssignCell(this);
+                }
+            }
+
+            if (Up is {State: CellState.Marked, VerticalAssignment: null})
+            {
+                Up.MarkVertical(segment);
+            }
+
+            if (Down is {State: CellState.Marked, VerticalAssignment: null})
+            {
+                Down.MarkVertical(segment);
+            }
         }
 
         public void MarkHorizontal(ISegment segment)
         {
             Mark();
             HorizontalAssignment = segment;
+            segment.AssignCell(this);
+
+            if (VerticalAssignment is null)
+            {
+                if (Down is {VerticalAssignment: {} verticalAssignmentDown})
+                {
+                    VerticalAssignment = verticalAssignmentDown;
+                    verticalAssignmentDown.AssignCell(this);
+                }
+                else if (Up is {VerticalAssignment: {} verticalAssignmentUp})
+                {
+                    VerticalAssignment = verticalAssignmentUp;
+                    verticalAssignmentUp.AssignCell(this);
+                }
+            }
+
+            if (Left is {State: CellState.Marked, HorizontalAssignment: null})
+            {
+                Left.MarkHorizontal(segment);
+            }
+
+            if (Right is {State: CellState.Marked, HorizontalAssignment: null})
+            {
+                Right.MarkHorizontal(segment);
+            }
         }
 
-        public void Exclude() => State = State != CellState.Undecided 
-            ? throw new Exception() 
-            : CellState.Excluded;
+        public void Exclude()
+        {
+            if (State == CellState.Excluded) return;
+            State = State != CellState.Undecided
+                ? throw new Exception()
+                : CellState.Excluded;
+        }
     }
 }

@@ -18,7 +18,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
     internal class LineEditor : ModelLayerBase, ILineEditor
     {
         private readonly ICellIterator _cellIterator;
-        private readonly Func<int, ISegmentEditor> _segmentEditorFactory;
+        private readonly Func<int, ICellIterator, ISegmentEditor> _segmentEditorFactory;
         private readonly Func<IReadOnlyList<ISegment>, ICellIterator, ILine> _lineFactory;
         private readonly ObservableCollection<ISegmentEditor> _segments = new();
         
@@ -27,7 +27,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
             ICellIterator cellIterator,
             
             // dependencies
-            Func<int, ISegmentEditor> segmentEditorFactory,
+            Func<int, ICellIterator, ISegmentEditor> segmentEditorFactory,
             Func<IReadOnlyList<ISegment>, ICellIterator, ILine> lineFactory)
         {
             _cellIterator = cellIterator;
@@ -38,7 +38,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
         
         public ReadOnlyObservableCollection<ISegmentEditor> Segments { get; }
 
-        public void AddSegment() => _segments.Add(_segmentEditorFactory(1));
+        public void AddSegment() => _segments.Add(_segmentEditorFactory(1, _cellIterator));
 
         public void RemoveSegment(ISegmentEditor segmentEditor) => _segments.Remove(segmentEditor);
 

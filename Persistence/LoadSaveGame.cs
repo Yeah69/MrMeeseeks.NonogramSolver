@@ -16,7 +16,7 @@ namespace MrMeeseeks.NonogramSolver.Persistence
         private readonly IHorizontalCellIterator _horizontalCellIterator;
         private readonly Func<ObjectId, string, (IReadOnlyList<ILine>, IReadOnlyList<ILine>), GamePersistence> _gameFactory;
         private readonly Func<IReadOnlyList<ISegment>, ICellIterator, ILine> _lineFactory;
-        private readonly Func<int, ISegment> _segmentFactory;
+        private readonly Func<int, ICellIterator, ISegment> _segmentFactory;
 
         private class Segment
         {
@@ -63,7 +63,7 @@ namespace MrMeeseeks.NonogramSolver.Persistence
             IHorizontalCellIterator horizontalCellIterator,
             Func<ObjectId, string, (IReadOnlyList<ILine>, IReadOnlyList<ILine>), GamePersistence> gameFactory,
             Func<IReadOnlyList<ISegment>, ICellIterator, ILine> lineFactory,
-            Func<int, ISegment> segmentFactory)
+            Func<int, ICellIterator, ISegment> segmentFactory)
         {
             _fileName = gameProjectDbPath.Value;
             _verticalCellIterator = verticalCellIterator;
@@ -85,12 +85,12 @@ namespace MrMeeseeks.NonogramSolver.Persistence
                         name,
                         (columns
                                 .Select(l =>
-                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length)).ToReadOnlyList(),
+                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length, _verticalCellIterator)).ToReadOnlyList(),
                                         _verticalCellIterator))
                                 .ToReadOnlyList(),
                             rows
                                 .Select(l =>
-                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length)).ToReadOnlyList(),
+                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length, _horizontalCellIterator)).ToReadOnlyList(),
                                         _horizontalCellIterator))
                                 .ToReadOnlyList()));
                 })

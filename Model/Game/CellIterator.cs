@@ -4,6 +4,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game
 {
     public interface ICellIterator
     {
+        int Coordinate(ICell cell);
         ICell? Previous(ICell cell);
         ICell? Next(ICell cell);
         ISegment? Assignment(ICell cell);
@@ -21,6 +22,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game
 
     internal class VerticalCellIterator : IVerticalCellIterator
     {
+        public int Coordinate(ICell cell) => cell.Y;
+
         public ICell? Previous(ICell cell) => cell.Up;
 
         public ICell? Next(ICell cell) => cell.Down;
@@ -32,6 +35,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game
 
     internal class HorizontalCellIterator : IHorizontalCellIterator
     {
+        public int Coordinate(ICell cell) => cell.X;
+        
         public ICell? Previous(ICell cell) => cell.Left;
 
         public ICell? Next(ICell cell) => cell.Right;

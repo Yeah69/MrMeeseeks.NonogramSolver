@@ -11,17 +11,20 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
 
     internal class SegmentEditor : ModelLayerBase, ISegmentEditor
     {
-        private readonly Func<int, ISegment> _segmentFactory;
+        private readonly ICellIterator _cellIterator;
+        private readonly Func<int, ICellIterator, ISegment> _segmentFactory;
         private int _length;
 
         public SegmentEditor(
             // parameter
             int length,
+            ICellIterator cellIterator,
             
             // dependencies
-            Func<int, ISegment> segmentFactory)
+            Func<int, ICellIterator, ISegment> segmentFactory)
         {
             Length = length;
+            _cellIterator = cellIterator;
             _segmentFactory = segmentFactory;
         }
 
@@ -31,6 +34,6 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
             set => SetIfChangedAndRaise(ref _length, value);
         }
 
-        public ISegment Build() => _segmentFactory(Length);
+        public ISegment Build() => _segmentFactory(Length, _cellIterator);
     }
 }

@@ -41,22 +41,20 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 for (int x = 0; x < Columns.Count; x++)
                 {
                     var cell = cellFactory((x, y));
-                    Columns[x].AddCell(cell);
-                    Rows[y].AddCell(cell);
+                    Columns[x].AddCell(cell.Vertical);
+                    Rows[y].AddCell(cell.Horizontal);
                     _cells.Add(cell);
                 }
             }
-
-            for (int y = 0; y < Rows.Count; y++)
+            
+            foreach (var iCell in Cells)
             {
-                for (int x = 0; x < Columns.Count; x++)
-                {
-                    var cell = (Cell) Columns[x].Cells[y];
-                    if (y > 0) cell.Up = Columns[x].Cells[y - 1];
-                    if (y < Columns.Count - 1) cell.Down = Columns[x].Cells[y + 1];
-                    if (x > 0) cell.Left = Columns[x - 1].Cells[y];
-                    if (x < Rows.Count - 1) cell.Right = Columns[x + 1].Cells[y];
-                }
+                var cell = (Cell)iCell;
+                var i = cell.Y * Columns.Count + cell.X;
+                if (cell.Y > 0) cell.Up = (Cell)Cells[i - Columns.Count];
+                if (cell.Y < Columns.Count - 1) cell.Down = (Cell)Cells[i + Columns.Count];
+                if (cell.X > 0) cell.Left = (Cell)Cells[i - 1];
+                if (cell.X < Rows.Count - 1) cell.Right = (Cell)Cells[i + 1];
             }
 
             for (int y = 0; y < Rows.Count; y++)
@@ -85,7 +83,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         public void Solve()
         {
             // Exclude empty lines
-            foreach (ICell cell in Columns
+            foreach (var cell in Columns
                 .Where(c => c.Segments.None())
                 .SelectMany(c => c.Cells)
                 .Concat(Rows

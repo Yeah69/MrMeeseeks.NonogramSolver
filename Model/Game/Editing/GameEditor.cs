@@ -1,7 +1,6 @@
 using MrMeeseeks.Extensions;
 using MrMeeseeks.NonogramSolver.Model.Game.Solving;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -21,22 +20,16 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
 
     internal class GameEditor : ModelLayerBase, IGameEditor
     {
-        private readonly IVerticalCellIterator _verticalCellIterator;
-        private readonly IHorizontalCellIterator _horizontalCellIterator;
-        private readonly Func<ICellIterator, ILineEditor> _lineEditorFactory;
+        private readonly Func<ILineEditor> _lineEditorFactory;
         private readonly ICreateGame _createGame;
         private readonly ObservableCollection<ILineEditor> _columns = new();
         private readonly ObservableCollection<ILineEditor> _rows = new();
         private string _name = "Untitled";
 
         public GameEditor(
-            IVerticalCellIterator verticalCellIterator,
-            IHorizontalCellIterator horizontalCellIterator,
-            Func<ICellIterator, ILineEditor> lineEditorFactory,
+            Func<ILineEditor> lineEditorFactory,
             ICreateGame createGame)
         {
-            _verticalCellIterator = verticalCellIterator;
-            _horizontalCellIterator = horizontalCellIterator;
             _lineEditorFactory = lineEditorFactory;
             _createGame = createGame;
             Columns = new ReadOnlyObservableCollection<ILineEditor>(_columns);
@@ -53,9 +46,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Editing
 
         public ReadOnlyObservableCollection<ILineEditor> Rows { get; }
 
-        public void AddColumn() => _columns.Add(_lineEditorFactory(_verticalCellIterator));
+        public void AddColumn() => _columns.Add(_lineEditorFactory());
 
-        public void AddRow() => _rows.Add(_lineEditorFactory(_horizontalCellIterator));
+        public void AddRow() => _rows.Add(_lineEditorFactory());
 
         public void RemoveColumn(ILineEditor column) => _columns.Remove(column);
         

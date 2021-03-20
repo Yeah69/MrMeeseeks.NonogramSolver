@@ -56,7 +56,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 
             Cells = model
                 .Cells
-                .Select(c => cellViewModelFactory(c, (model.Columns[c.X], model.Rows[c.Y])))
+                .Select(c => cellViewModelFactory(c, (model.Columns[c.Vertical.Position], model.Rows[c.Horizontal.Position])))
                 .ToReadOnlyList();
 
             ColumnCount = model.Columns.Count;

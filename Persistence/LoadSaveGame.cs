@@ -1,6 +1,5 @@
 using LiteDB;
 using MrMeeseeks.Extensions;
-using MrMeeseeks.NonogramSolver.Model.Game;
 using MrMeeseeks.NonogramSolver.Model.Game.Solving;
 using MrMeeseeks.NonogramSolver.Model.PersistenceHook;
 using System;
@@ -12,11 +11,9 @@ namespace MrMeeseeks.NonogramSolver.Persistence
     internal class GameRepositoryRepository : ILoadGames, IGameRepository
     {
         private readonly string _fileName;
-        private readonly IVerticalCellIterator _verticalCellIterator;
-        private readonly IHorizontalCellIterator _horizontalCellIterator;
         private readonly Func<ObjectId, string, (IReadOnlyList<ILine>, IReadOnlyList<ILine>), GamePersistence> _gameFactory;
-        private readonly Func<IReadOnlyList<ISegment>, ICellIterator, ILine> _lineFactory;
-        private readonly Func<int, ICellIterator, ISegment> _segmentFactory;
+        private readonly Func<IReadOnlyList<ISegment>, ILine> _lineFactory;
+        private readonly Func<int, ISegment> _segmentFactory;
 
         private class Segment
         {
@@ -59,15 +56,11 @@ namespace MrMeeseeks.NonogramSolver.Persistence
 
         public GameRepositoryRepository(
             IGameProjectDbPath gameProjectDbPath,
-            IVerticalCellIterator verticalCellIterator,
-            IHorizontalCellIterator horizontalCellIterator,
             Func<ObjectId, string, (IReadOnlyList<ILine>, IReadOnlyList<ILine>), GamePersistence> gameFactory,
-            Func<IReadOnlyList<ISegment>, ICellIterator, ILine> lineFactory,
-            Func<int, ICellIterator, ISegment> segmentFactory)
+            Func<IReadOnlyList<ISegment>, ILine> lineFactory,
+            Func<int, ISegment> segmentFactory)
         {
             _fileName = gameProjectDbPath.Value;
-            _verticalCellIterator = verticalCellIterator;
-            _horizontalCellIterator = horizontalCellIterator;
             _gameFactory = gameFactory;
             _lineFactory = lineFactory;
             _segmentFactory = segmentFactory;
@@ -85,13 +78,11 @@ namespace MrMeeseeks.NonogramSolver.Persistence
                         name,
                         (columns
                                 .Select(l =>
-                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length, _verticalCellIterator)).ToReadOnlyList(),
-                                        _verticalCellIterator))
+                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length)).ToReadOnlyList()))
                                 .ToReadOnlyList(),
                             rows
                                 .Select(l =>
-                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length, _horizontalCellIterator)).ToReadOnlyList(),
-                                        _horizontalCellIterator))
+                                    _lineFactory(l.Segments.Select(s => _segmentFactory(s.Length)).ToReadOnlyList()))
                                 .ToReadOnlyList()));
                 })
                 .ToReadOnlyList();

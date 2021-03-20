@@ -7,45 +7,41 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
     {
         int Length { get; }
         
-        ICell? CurrentMinCell { get; }
+        ILineCell? CurrentMinCell { get; }
         
-        ICell? CurrentMaxCell { get; }
+        ILineCell? CurrentMaxCell { get; }
         
-        ReadOnlyObservableCollection<ICell> AssignedCells { get; }
+        ReadOnlyObservableCollection<ILineCell> AssignedCells { get; }
 
         bool Cleared => Length == AssignedCells.Count;
 
-        void AssignCell(ICell cell);
+        void AssignCell(ILineCell cell);
     }
 
     internal class Segment : ModelLayerBase, ISegment
     {
-        private readonly ICellIterator _cellIterator;
-        private readonly ObservableCollection<ICell> _assignedCells = new();
-        private ICell? _currentMinCell;
-        private ICell? _currentMaxCell;
+        private readonly ObservableCollection<ILineCell> _assignedCells = new();
+        private ILineCell? _currentMinCell;
+        private ILineCell? _currentMaxCell;
 
-        public Segment(
-            int length,
-            ICellIterator cellIterator)
+        public Segment(int length)
         {
-            _cellIterator = cellIterator;
             Length = length > 0
                 ? length
                 : throw new ArgumentException("Segment length has to be greater than zero.");
 
-            AssignedCells = new ReadOnlyObservableCollection<ICell>(_assignedCells);
+            AssignedCells = new ReadOnlyObservableCollection<ILineCell>(_assignedCells);
         }
 
         public int Length { get; }
 
-        public ICell? CurrentMinCell
+        public ILineCell? CurrentMinCell
         {
             get => _currentMinCell;
             private set => SetIfChangedAndRaise(ref _currentMinCell, value);
         }
 
-        public ICell? CurrentMaxCell
+        public ILineCell? CurrentMaxCell
         {
             get => _currentMaxCell;
             private set => SetIfChangedAndRaise(ref _currentMaxCell, value);
@@ -53,30 +49,30 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         
         bool Cleared => Length == AssignedCells.Count;
         
-        public ReadOnlyObservableCollection<ICell> AssignedCells { get; }
+        public ReadOnlyObservableCollection<ILineCell> AssignedCells { get; }
         
-        public void AssignCell(ICell cell)
+        public void AssignCell(ILineCell cell)
         {
             if (_assignedCells.Contains(cell)) return;
             _assignedCells.Add(cell);
             
             // Update min and max cell
-            if (CurrentMinCell is { } minCell && _cellIterator.Coordinate(minCell) > _cellIterator.Coordinate(cell)
+            if (CurrentMinCell is { } minCell && minCell.Position > cell.Position
                 || CurrentMinCell is null)
                 CurrentMinCell = cell;
-            if (CurrentMaxCell is { } maxCell && _cellIterator.Coordinate(maxCell) < _cellIterator.Coordinate(cell)
+            if (CurrentMaxCell is { } maxCell && maxCell.Position < cell.Position
                 || CurrentMaxCell is null)
                 CurrentMaxCell = cell;
 
             var iCell = CurrentMinCell;
-            while (iCell != CurrentMaxCell && _cellIterator.Next(iCell) is {} nextCell)
+            while (iCell != CurrentMaxCell && iCell.Next is {} nextCell)
             {
                 iCell = nextCell;
-                if (_cellIterator.Assignment(iCell) == this)
+                if (iCell.Assignment == this)
                     continue;
-                if (_cellIterator.Assignment(iCell) is not null && _cellIterator.Assignment(iCell) != this || iCell.State == CellState.Excluded)
+                if (iCell.Assignment is not null && iCell.Assignment != this || iCell.State == CellState.Excluded)
                     throw new Exception();
-                _cellIterator.Mark(iCell, this);
+                iCell.Mark(this);
             }
             
             if (Cleared)

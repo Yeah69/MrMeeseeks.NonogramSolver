@@ -6,17 +6,19 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
     
     public interface ICell : IModelLayerBase
     {
-        int X { get; }
-        int Y { get; }
-        ISegment? VerticalAssignment { get; }
-        ISegment? HorizontalAssignment { get; }
-        ICell? Up { get; }
-        ICell? Down { get; }
-        ICell? Left { get; }
-        ICell? Right { get; }
+        ILineCell Vertical { get; }
+        ILineCell Horizontal { get; }
         CellState State { get; }
-        void MarkVertical(ISegment segment);
-        void MarkHorizontal(ISegment segment);
+    }
+    
+    public interface ILineCell : IModelLayerBase
+    {
+        int Position { get; }
+        ISegment? Assignment { get; }
+        ILineCell? Previous { get; }
+        ILineCell? Next { get; }
+        CellState State { get; }
+        void Mark(ISegment segment);
         void Exclude();
     }
 
@@ -26,8 +28,15 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         private ISegment? _verticalAssignment;
         private ISegment? _horizontalAssignment;
 
-        public Cell((int, int) xAndY) => (X, Y) = xAndY;
+        public Cell((int, int) xAndY)
+        {
+            (X, Y) = xAndY;
+            Vertical = new VerticalLineCell(this);
+            Horizontal = new HorizontalLineCell(this);
+        }
 
+        public ILineCell Vertical { get; }
+        public ILineCell Horizontal { get; }
         public int X { get; }
         public int Y { get; }
 
@@ -43,13 +52,13 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             private set => SetIfChangedAndRaise(ref _horizontalAssignment, value);
         }
 
-        public ICell? Up { get; set; }
+        public Cell? Up { get; set; }
         
-        public ICell? Down { get; set; }
+        public Cell? Down { get; set; }
         
-        public ICell? Left { get; set; }
+        public Cell? Left { get; set; }
         
-        public ICell? Right { get; set; }
+        public Cell? Right { get; set; }
 
         public CellState State
         {
@@ -68,19 +77,19 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         {
             Mark();
             VerticalAssignment = segment;
-            segment.AssignCell(this);
+            segment.AssignCell(this.Vertical);
 
             if (HorizontalAssignment is null)
             {
                 if (Left is {HorizontalAssignment: {} horizontalAssignmentDown})
                 {
                     HorizontalAssignment = horizontalAssignmentDown;
-                    horizontalAssignmentDown.AssignCell(this);
+                    horizontalAssignmentDown.AssignCell(this.Horizontal);
                 }
                 else if (Right is {HorizontalAssignment: {} horizontalAssignmentUp})
                 {
                     HorizontalAssignment = horizontalAssignmentUp;
-                    horizontalAssignmentUp.AssignCell(this);
+                    horizontalAssignmentUp.AssignCell(this.Horizontal);
                 }
             }
 
@@ -99,19 +108,19 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         {
             Mark();
             HorizontalAssignment = segment;
-            segment.AssignCell(this);
+            segment.AssignCell(this.Horizontal);
 
             if (VerticalAssignment is null)
             {
                 if (Down is {VerticalAssignment: {} verticalAssignmentDown})
                 {
                     VerticalAssignment = verticalAssignmentDown;
-                    verticalAssignmentDown.AssignCell(this);
+                    verticalAssignmentDown.AssignCell(this.Vertical);
                 }
                 else if (Up is {VerticalAssignment: {} verticalAssignmentUp})
                 {
                     VerticalAssignment = verticalAssignmentUp;
-                    verticalAssignmentUp.AssignCell(this);
+                    verticalAssignmentUp.AssignCell(this.Vertical);
                 }
             }
 
@@ -132,6 +141,55 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             State = State != CellState.Undecided
                 ? throw new Exception()
                 : CellState.Excluded;
+        }
+        
+        private abstract class LineCellBase : ModelLayerBase, ILineCell
+        {
+            protected readonly Cell Parent;
+
+            public LineCellBase(Cell parent)
+            {
+                Parent = parent;
+            }
+
+            public abstract int Position { get; }
+            public abstract ISegment? Assignment { get; }
+            public abstract ILineCell? Previous { get; }
+            public abstract ILineCell? Next { get; }
+            
+            public abstract void Mark(ISegment segment);
+
+            public CellState State => Parent.State;
+
+            public void Exclude() => Parent.Exclude();
+        }
+        
+        private class VerticalLineCell : LineCellBase
+        {
+
+            public VerticalLineCell(Cell parent) : base(parent)
+            {
+            }
+
+            public override int Position => Parent.Y;
+            public override ISegment? Assignment => Parent.VerticalAssignment;
+            public override ILineCell? Previous => Parent.Up?.Vertical;
+            public override ILineCell? Next => Parent.Down?.Vertical;
+            public override void Mark(ISegment segment) => Parent.MarkVertical(segment);
+        }
+        
+        private class HorizontalLineCell : LineCellBase
+        {
+
+            public HorizontalLineCell(Cell parent) : base(parent)
+            {
+            }
+
+            public override int Position => Parent.X;
+            public override ISegment? Assignment => Parent.HorizontalAssignment;
+            public override ILineCell? Previous => Parent.Left?.Horizontal;
+            public override ILineCell? Next => Parent.Right?.Horizontal;
+            public override void Mark(ISegment segment) => Parent.MarkHorizontal(segment);
         }
     }
 }

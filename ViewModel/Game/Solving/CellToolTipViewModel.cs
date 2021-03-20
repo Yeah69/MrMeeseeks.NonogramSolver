@@ -25,18 +25,18 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
             _lines = lines;
         }
 
-        public int X => _cell.X;
-        public int Y => _cell.Y;
+        public int X => _cell.Horizontal.Position;
+        public int Y => _cell.Vertical.Position;
 
-        public string PossibleColumnSegments => PossibleSegmentsTemplate(_lines.Column, _cell.Y);
-        public string PossibleRowSegments => PossibleSegmentsTemplate(_lines.Row, _cell.X);
+        public string PossibleColumnSegments => PossibleSegmentsTemplate(_lines.Column, Y);
+        public string PossibleRowSegments => PossibleSegmentsTemplate(_lines.Row, X);
         
         private string PossibleSegmentsTemplate(ILine line, int index) =>
             string.Join(
                 ", ", 
                 line
-                    .GetPossibleSegments(_cell)
-                    .Select(s => (s == _cell.HorizontalAssignment || s == _cell.VerticalAssignment) 
+                    .GetPossibleSegments(line.Cells[index])
+                    .Select(s => (s == _cell.Horizontal.Assignment || s == _cell.Vertical.Assignment) 
                         ? $"_{s.Length}_" 
                         : s.Length.ToString()));
     }

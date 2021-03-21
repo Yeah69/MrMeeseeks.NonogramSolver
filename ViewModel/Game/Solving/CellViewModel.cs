@@ -16,7 +16,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
     {
         private readonly ICell _model;
         private readonly (ILine Column, ILine Row) _lines;
-        private readonly Func<ICell, (ILine Column, ILine Row), ICellToolTipViewModel> _cellToolTipViewModelFactory;
+        private readonly Func<ICell, ICellToolTipViewModel> _cellToolTipViewModelFactory;
 
         public CellViewModel(
             // parameters
@@ -24,7 +24,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
             (ILine Column, ILine Row) lines,
 
             // dependencies
-            Func<ICell, (ILine Column, ILine Row), ICellToolTipViewModel> cellToolTipViewModelFactory,
+            Func<ICell, ICellToolTipViewModel> cellToolTipViewModelFactory,
             CompositeDisposable compositeDisposable)
         {
             _model = model;
@@ -39,6 +39,6 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 
         public bool IsMarked => _model.State == CellState.Marked;
         public bool IsExcluded => _model.State == CellState.Excluded;
-        public ICellToolTipViewModel ToolTip => _cellToolTipViewModelFactory(_model, _lines);
+        public ICellToolTipViewModel ToolTip => _cellToolTipViewModelFactory(_model);
     }
 }

@@ -1,4 +1,5 @@
 using MrMeeseeks.NonogramSolver.Model.Game.Solving;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
@@ -14,28 +15,24 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
     internal class CellToolTipViewModel : ICellToolTipViewModel
     {
         private readonly ICell _cell;
-        private readonly (ILine Column, ILine Row) _lines;
 
         public CellToolTipViewModel(
             // parameters
-            ICell cell,
-            (ILine Column, ILine Row) lines)
+            ICell cell)
         {
             _cell = cell;
-            _lines = lines;
         }
 
         public int X => _cell.Horizontal.Position;
         public int Y => _cell.Vertical.Position;
 
-        public string PossibleColumnSegments => PossibleSegmentsTemplate(_lines.Column, Y);
-        public string PossibleRowSegments => PossibleSegmentsTemplate(_lines.Row, X);
+        public string PossibleColumnSegments => PossibleSegmentsTemplate(_cell.Vertical.PossibleAssignments);
+        public string PossibleRowSegments => PossibleSegmentsTemplate(_cell.Horizontal.PossibleAssignments);
         
-        private string PossibleSegmentsTemplate(ILine line, int index) =>
+        private string PossibleSegmentsTemplate(IEnumerable<ISegment> possibleSegments) =>
             string.Join(
                 ", ", 
-                line
-                    .GetPossibleSegments(line.Cells[index])
+                possibleSegments
                     .Select(s => (s == _cell.Horizontal.Assignment || s == _cell.Vertical.Assignment) 
                         ? $"_{s.Length}_" 
                         : s.Length.ToString()));

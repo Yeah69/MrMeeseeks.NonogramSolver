@@ -94,26 +94,10 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             
             // Do the match thing
             foreach (ILine line in Columns)
-            {
                 line.InitializeAssignments();
-                line.DoTheMatchThing();
-            }
 
             foreach (ILine line in Rows)
-            {
                 line.InitializeAssignments();
-                line.DoTheMatchThing();
-            }
-            
-            foreach (ILine line in Columns)
-            {
-                line.TryToAssignUnassigned();
-            }
-
-            foreach (ILine line in Rows)
-            {
-                line.TryToAssignUnassigned();
-            }
         }
 
         public abstract void Save();

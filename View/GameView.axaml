@@ -17,7 +17,7 @@
                 </Grid.RowDefinitions>
                 <Grid Margin="1">
                     <TextBlock Text="{Binding Length}" 
-                               Background="{x:Static Brushes.Black}" 
+                               Background="{Binding Background}" 
                                TextAlignment="Center"
                                FontSize="15"
                                MinWidth="15" />

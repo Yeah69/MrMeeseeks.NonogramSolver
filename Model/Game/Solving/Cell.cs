@@ -1,4 +1,7 @@
+using MrMeeseeks.Extensions;
 using System;
+using System.Collections.Immutable;
+using System.Linq;
 
 namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
@@ -18,8 +21,11 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         ILineCell? Previous { get; }
         ILineCell? Next { get; }
         CellState State { get; }
+        ImmutableHashSet<ISegment> PossibleAssignments { get; }
         void Mark(ISegment segment);
         void Exclude();
+        public void InitializePossibleAssignments(ImmutableHashSet<ISegment> set);
+        public void ExcludePossibleAssignment(ISegment segment);
     }
 
     internal class Cell : ModelLayerBase, ICell
@@ -52,13 +58,13 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             private set => SetIfChangedAndRaise(ref _horizontalAssignment, value);
         }
 
-        public Cell? Up { get; set; }
+        public Cell? Up { private get; set; }
         
-        public Cell? Down { get; set; }
+        public Cell? Down { private get; set; }
         
-        public Cell? Left { get; set; }
+        public Cell? Left { private get; set; }
         
-        public Cell? Right { get; set; }
+        public Cell? Right { private get; set; }
 
         public CellState State
         {
@@ -73,7 +79,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             State = CellState.Marked;
         }
 
-        public void MarkVertical(ISegment segment)
+        private void MarkVertical(ISegment segment)
         {
             Mark();
             VerticalAssignment = segment;
@@ -81,30 +87,22 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
             if (HorizontalAssignment is null)
             {
-                if (Left is {HorizontalAssignment: {} horizontalAssignmentDown})
-                {
-                    HorizontalAssignment = horizontalAssignmentDown;
-                    horizontalAssignmentDown.AssignCell(this.Horizontal);
-                }
+                if (Horizontal.PossibleAssignments.Count == 1)
+                    Horizontal.Mark(Horizontal.PossibleAssignments.First());
+                else if (Left is {HorizontalAssignment: {} horizontalAssignmentDown})
+                    Horizontal.Mark(horizontalAssignmentDown);
                 else if (Right is {HorizontalAssignment: {} horizontalAssignmentUp})
-                {
-                    HorizontalAssignment = horizontalAssignmentUp;
-                    horizontalAssignmentUp.AssignCell(this.Horizontal);
-                }
+                    Horizontal.Mark(horizontalAssignmentUp);
             }
 
             if (Up is {State: CellState.Marked, VerticalAssignment: null})
-            {
-                Up.MarkVertical(segment);
-            }
+                Up.Vertical.Mark(segment);
 
             if (Down is {State: CellState.Marked, VerticalAssignment: null})
-            {
-                Down.MarkVertical(segment);
-            }
+                Down.Vertical.Mark(segment);
         }
 
-        public void MarkHorizontal(ISegment segment)
+        private void MarkHorizontal(ISegment segment)
         {
             Mark();
             HorizontalAssignment = segment;
@@ -112,30 +110,22 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
             if (VerticalAssignment is null)
             {
-                if (Down is {VerticalAssignment: {} verticalAssignmentDown})
-                {
-                    VerticalAssignment = verticalAssignmentDown;
-                    verticalAssignmentDown.AssignCell(this.Vertical);
-                }
+                if (Vertical.PossibleAssignments.Count == 1)
+                    Vertical.Mark(Vertical.PossibleAssignments.First());
+                else if (Down is {VerticalAssignment: {} verticalAssignmentDown})
+                    Vertical.Mark(verticalAssignmentDown);
                 else if (Up is {VerticalAssignment: {} verticalAssignmentUp})
-                {
-                    VerticalAssignment = verticalAssignmentUp;
-                    verticalAssignmentUp.AssignCell(this.Vertical);
-                }
+                    Vertical.Mark(verticalAssignmentUp);
             }
 
             if (Left is {State: CellState.Marked, HorizontalAssignment: null})
-            {
-                Left.MarkHorizontal(segment);
-            }
+                Left.Horizontal.Mark(segment);
 
             if (Right is {State: CellState.Marked, HorizontalAssignment: null})
-            {
-                Right.MarkHorizontal(segment);
-            }
+                Right.Horizontal.Mark(segment);
         }
 
-        public void Exclude()
+        private void Exclude()
         {
             if (State == CellState.Excluded) return;
             State = State != CellState.Undecided
@@ -146,50 +136,105 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         private abstract class LineCellBase : ModelLayerBase, ILineCell
         {
             protected readonly Cell Parent;
+            private ImmutableHashSet<ISegment> _possibleAssignments = ImmutableHashSet<ISegment>.Empty;
 
-            public LineCellBase(Cell parent)
+            public ImmutableHashSet<ISegment> PossibleAssignments
             {
-                Parent = parent;
+                get => _possibleAssignments;
+                private set
+                {
+                    SetIfChangedAndRaise(ref _possibleAssignments, value);
+                    if (PossibleAssignments.Count == 0
+                        && State == CellState.Undecided) 
+                        Exclude();
+                    if (PossibleAssignments.Count == 1 
+                        && Assignment is null 
+                        && State == CellState.Marked) 
+                        Mark(PossibleAssignments.First());
+                }
             }
+
+            protected LineCellBase(Cell parent) => Parent = parent;
 
             public abstract int Position { get; }
             public abstract ISegment? Assignment { get; }
             public abstract ILineCell? Previous { get; }
             public abstract ILineCell? Next { get; }
             
-            public abstract void Mark(ISegment segment);
+            public virtual void Mark(ISegment segment) => 
+                PossibleAssignments = ImmutableHashSet<ISegment>.Empty.Add(segment);
 
             public CellState State => Parent.State;
 
-            public void Exclude() => Parent.Exclude();
+            public void Exclude()
+            {
+                Parent.Exclude();
+                PossibleAssignments = ImmutableHashSet<ISegment>.Empty;
+            }
+
+            public void InitializePossibleAssignments(ImmutableHashSet<ISegment> set)
+            {
+                _possibleAssignments = set;
+                foreach (var segment in set)
+                    segment.PossibleAssignCell(this);
+            }
+
+            public void ExcludePossibleAssignment(ISegment segment)
+            {
+                PossibleAssignments = PossibleAssignments.Except(segment.ToEnumerable());
+            }
         }
         
-        private class VerticalLineCell : LineCellBase
+        private class VerticalLineCell : LineCellBase, IDisposable
         {
+            private readonly IDisposable _subscription;
 
-            public VerticalLineCell(Cell parent) : base(parent)
-            {
-            }
+            public VerticalLineCell(Cell parent) : base(parent) =>
+                _subscription = this.EscalateNotifications(
+                    parent,
+                    (nameof(parent.Up), nameof(Previous)),
+                    (nameof(parent.Down), nameof(Next)),
+                    (nameof(parent.VerticalAssignment), nameof(Assignment)),
+                    (nameof(parent.State), nameof(State)),
+                    (nameof(parent.Y), nameof(Position)));
 
             public override int Position => Parent.Y;
             public override ISegment? Assignment => Parent.VerticalAssignment;
             public override ILineCell? Previous => Parent.Up?.Vertical;
             public override ILineCell? Next => Parent.Down?.Vertical;
-            public override void Mark(ISegment segment) => Parent.MarkVertical(segment);
+            public override void Mark(ISegment segment)
+            {
+                Parent.MarkVertical(segment);
+                base.Mark(segment);
+            }
+
+            public void Dispose() => _subscription.Dispose();
         }
         
-        private class HorizontalLineCell : LineCellBase
+        private class HorizontalLineCell : LineCellBase, IDisposable
         {
+            private readonly IDisposable _subscription;
 
-            public HorizontalLineCell(Cell parent) : base(parent)
-            {
-            }
+            public HorizontalLineCell(Cell parent) : base(parent) =>
+                _subscription = this.EscalateNotifications(
+                    parent,
+                    (nameof(parent.Left), nameof(Previous)),
+                    (nameof(parent.Right), nameof(Next)),
+                    (nameof(parent.HorizontalAssignment), nameof(Assignment)),
+                    (nameof(parent.State), nameof(State)),
+                    (nameof(parent.X), nameof(Position)));
 
             public override int Position => Parent.X;
             public override ISegment? Assignment => Parent.HorizontalAssignment;
             public override ILineCell? Previous => Parent.Left?.Horizontal;
             public override ILineCell? Next => Parent.Right?.Horizontal;
-            public override void Mark(ISegment segment) => Parent.MarkHorizontal(segment);
+            public override void Mark(ISegment segment)
+            {
+                Parent.MarkHorizontal(segment);
+                base.Mark(segment);
+            }
+
+            public void Dispose() => _subscription.Dispose();
         }
     }
 }

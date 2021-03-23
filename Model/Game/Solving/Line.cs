@@ -27,6 +27,14 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         {
             Segments = segments;
 
+            ISegment? prevSegment = segments.First();
+            foreach (var segment in segments.Skip(1))
+            {
+                segment.Previous = prevSegment;
+                prevSegment.Next = segment;
+                prevSegment = segment;
+            }
+
             SegmentsMinLength = Segments.Any()
                 ? Segments.Sum(s => s.Length) + Segments.Count - 1
                 : 0;
@@ -39,10 +47,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                         .Where(_ => s.Cleared)
                         .Do(_ =>
                         {
-                            foreach (var cell in Cells.Except(s.AssignedCells))
-                            {
-                                cell.ExcludePossibleAssignment(s);
-                            }
+                            foreach (var cell in Cells.Except(s.AssignedCells)) cell.ExcludePossibleAssignment(s);
                         }))
                 .Merge()
                 .Subscribe();
@@ -65,102 +70,81 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         public void InitializeAssignments()
         {
+            
+            
             Dictionary<ILineCell, ImmutableHashSet<ISegment>> cellsToPossibleSegments = new();
-            int i = 0;
-            ImmutableHashSet<ISegment>? possibleSegmentsList = ImmutableHashSet.Create<ISegment>();
+            var i = 0;
+            var possibleSegmentsList = ImmutableHashSet.Create<ISegment>();
             foreach (var segment in Segments)
             {
                 possibleSegmentsList = possibleSegmentsList.Add(segment);
                 for (int j = i; j < i + segment.Length + 1; j++)
-                {
                     if (j < Cells.Count)
-                    {
                         cellsToPossibleSegments.Add(Cells[j], possibleSegmentsList);
-                    }
-                }
 
                 i += segment.Length + 1;
             }
 
-            for (; i < Cells.Count; i++)
-            {
-                cellsToPossibleSegments.Add(Cells[i], possibleSegmentsList);
-            }
+            for (; i < Cells.Count; i++) cellsToPossibleSegments.Add(Cells[i], possibleSegmentsList);
 
             i = Cells.Count - 1;
-            ImmutableHashSet<ISegment>? possibleSegmentsListInverse = ImmutableHashSet.Create<ISegment>();
+            var possibleSegmentsListInverse = ImmutableHashSet.Create<ISegment>();
             foreach (var segment in Segments.Reverse())
             {
                 possibleSegmentsListInverse = possibleSegmentsListInverse.Add(segment);
                 for (int j = i; j > i - segment.Length - 1; j--)
-                {
                     if (j >= 0)
-                    {
                         cellsToPossibleSegments[Cells[j]] =
                             cellsToPossibleSegments[Cells[j]].Intersect(possibleSegmentsListInverse);
-                    }
-                }
 
                 i -= segment.Length + 1;
             }
 
             for (; i >= 0; i--)
-            {
                 cellsToPossibleSegments[Cells[i]] =
                     cellsToPossibleSegments[Cells[i]].Intersect(possibleSegmentsListInverse);
-            }
 
             foreach (var (cell, possibleAssignments) in cellsToPossibleSegments)
-            {
                 cell.InitializePossibleAssignments(possibleAssignments);
-            }
 
-            foreach (var segment in Segments)
-            {
-                segment.InitializeTrivialAssignments();
-            }
+            foreach (var segment in Segments) segment.InitializeTrivialAssignments();
         }
 
         public void TryToAssignUnassigned()
         {
             foreach (var cell in Cells)
-            {
                 if (cell.State == CellState.Marked && cell.PossibleAssignments.Count == 1)
                 {
-                    if (cell.Assignment is { })
-                    {
-                        continue;
-                    }
+                    if (cell.Assignment is { }) continue;
 
                     CheckAndMarkSuitableNeighbors(cell, cell.PossibleAssignments.First());
                 }
-            }
 
             void CheckAndMarkSuitableNeighbors(ILineCell seed, ISegment segment)
             {
-                List<ILineCell>? segmentNeighborhood = new List<ILineCell> {seed};
-                List<ILineCell>? previous = new List<ILineCell>();
+                var segmentNeighborhood = new List<ILineCell> {seed};
+                var previous = new List<ILineCell>();
                 ILineCell? iCell = seed;
-                int i = 1;
+                var i = 1;
                 while (i <= segment.Length && iCell.Previous is { } cell &&
                        (cell.State == CellState.Undecided
-                        || (cell.State == CellState.Marked
-                            && (cell.Assignment is null
-                                || cell.Assignment == segment))))
+                     || (cell.State == CellState.Marked
+                      && (cell.Assignment is null
+                       || cell.Assignment == segment))))
                 {
                     previous.Add(cell);
                     i++;
                     iCell = cell;
                 }
 
-                List<ILineCell> next = new ();
+                List<ILineCell> next = new();
                 iCell = seed;
                 i = 1;
                 while (i <= segment.Length && iCell.Next is { } cell &&
                        (cell.State == CellState.Undecided
-                        || (cell.State == CellState.Marked
-                            && (cell.Assignment is null
-                                || cell.Assignment == segment))))
+                     || (cell.State == CellState.Marked
+                      && (cell.Assignment is null
+                       || cell.Assignment == segment))))
                 {
                     next.Add(cell);
                     i++;
@@ -168,7 +152,6 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 }
 
                 if (previous.Any(c => c.Assignment == segment))
-                {
                     foreach (ILineCell cell in previous
                         .AsEnumerable()
                         .Reverse()
@@ -179,10 +162,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                         segmentNeighborhood.Add(cell);
                         previous.Remove(cell);
                     }
-                }
 
                 if (next.Any(c => c.Assignment == segment))
-                {
                     foreach (ILineCell cell in next
                         .AsEnumerable()
                         .Reverse()
@@ -193,10 +174,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                         segmentNeighborhood.Add(cell);
                         next.Remove(cell);
                     }
-                }
 
                 int diff = segment.Length - segmentNeighborhood.Count - previous.Count;
-                for (int j = 0; j < diff; j++)
+                for (var j = 0; j < diff; j++)
                 {
                     ILineCell? cell = next.First();
                     cell.Mark(segment);
@@ -205,7 +185,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 }
 
                 diff = segment.Length - segmentNeighborhood.Count - next.Count;
-                for (int j = 0; j < diff; j++)
+                for (var j = 0; j < diff; j++)
                 {
                     ILineCell? cell = previous.First();
                     cell.Mark(segment);

@@ -51,10 +51,10 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             {
                 var cell = (Cell)iCell;
                 var i = cell.Y * Columns.Count + cell.X;
-                if (cell.Y > 0) cell.Up = (Cell)Cells[i - Columns.Count];
-                if (cell.Y < Columns.Count - 1) cell.Down = (Cell)Cells[i + Columns.Count];
-                if (cell.X > 0) cell.Left = (Cell)Cells[i - 1];
-                if (cell.X < Rows.Count - 1) cell.Right = (Cell)Cells[i + 1];
+                if (cell.Y > 0) iCell.Vertical.Previous = Cells[i - Columns.Count].Vertical;
+                if (cell.Y < Columns.Count - 1) iCell.Vertical.Next = Cells[i + Columns.Count].Vertical;
+                if (cell.X > 0) iCell.Horizontal.Previous = Cells[i - 1].Horizontal;
+                if (cell.X < Rows.Count - 1) iCell.Horizontal.Next = Cells[i + 1].Horizontal;
             }
 
             for (int y = 0; y < Rows.Count; y++)

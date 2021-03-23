@@ -1,5 +1,7 @@
 using Avalonia.Media;
 using MrMeeseeks.NonogramSolver.Model.Game.Solving;
+using System;
+using System.Linq;
 
 namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 {
@@ -7,6 +9,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
     {
         int Length { get; }
         ISolidColorBrush Background { get; }
+        String ToolTip { get; }
     }
 
     internal class SegmentViewModel : ViewModelLayerBase, ISegmentViewModel
@@ -26,5 +29,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
         public ISolidColorBrush Background => _model.Cleared
             ? Brushes.DarkGray
             : Brushes.Black;
+
+        public string ToolTip => $"P. Cells: {string.Join(", ", _model.CurrentPossibleCells.Except(_model.AssignedCells).Select(c => c.Position))}";
     }
 }

@@ -9,6 +9,9 @@
     <UserControl.DataTemplates>
         <DataTemplate DataType="{x:Type solving:ISegmentViewModel}">
             <Grid Background="{x:Static Brushes.Gray}">
+                <ToolTip.Tip>
+                    <TextBlock Text="{Binding ToolTip}" />
+                </ToolTip.Tip>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="CellSize" />
                 </Grid.ColumnDefinitions>

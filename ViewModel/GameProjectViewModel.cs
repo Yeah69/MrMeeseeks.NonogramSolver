@@ -20,8 +20,9 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         string Name { get; }
         ReadOnlyObservableCollection<IGameViewModel> Games { get; }
         IGameViewModel? SelectedGame { get; set; }
-        IGameEditorViewModel? Editor { get; }
+        IGameEditorViewModelBase? Editor { get; }
         void CreateNewGame();
+        void CreateNewGameTextual();
         void CopyAndEdit(IGameViewModel game);
     }
 
@@ -30,8 +31,9 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         private readonly IGameProject _gameProject;
         private readonly Func<IGameEditor> _gameEditorFactory;
         private readonly Func<IGameEditor, IGameEditorViewModel> _gameEditorViewModelFactory;
+        private readonly Func<ITextualGameEditorViewModel> _textualGameEditorViewModelFactory;
         private IGameViewModel? _selectedGame;
-        private IGameEditorViewModel? _editor;
+        private IGameEditorViewModelBase? _editor;
 
         public GameProjectViewModel(
             // parameters
@@ -41,11 +43,13 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
             Func<IGame, IGameViewModel> gameViewModelFactory,
             Func<IGameEditor> gameEditorFactory,
             Func<IGameEditor, IGameEditorViewModel> gameEditorViewModelFactory,
+            Func<ITextualGameEditorViewModel> textualGameEditorViewModelFactory,
             CompositeDisposable compositeDisposable)
         {
             _gameProject = gameProject;
             _gameEditorFactory = gameEditorFactory;
             _gameEditorViewModelFactory = gameEditorViewModelFactory;
+            _textualGameEditorViewModelFactory = textualGameEditorViewModelFactory;
 
             _gameProject
                 .Games
@@ -71,7 +75,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
 
         public bool IsGamesVisible => IsEditorVisible.Not();
 
-        public IGameEditorViewModel? Editor
+        public IGameEditorViewModelBase? Editor
         {
             get => _editor;
             private set
@@ -90,6 +94,13 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
 #pragma warning restore 4014
         }
 
+        public void CreateNewGameTextual()
+        {
+#pragma warning disable 4014 // Fire and forget is intended
+            TriggerEditing(_textualGameEditorViewModelFactory());
+#pragma warning restore 4014
+        }
+
         public void CopyAndEdit(IGameViewModel game)
         {
 #pragma warning disable 4014 // Fire and forget is intended
@@ -101,12 +112,13 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
 
         public void Build() => Editor?.Okay();
 
-        private async Task TriggerEditing(IGameEditorViewModel editorViewModel)
+        private async Task TriggerEditing(IGameEditorViewModelBase editorViewModel)
         {
             Editor = editorViewModel;
             try
             {
-                _gameProject.Add(await editorViewModel.Result);
+                IGame result = await editorViewModel.Result;
+                _gameProject.Add(result);
             }
             catch (OperationCanceledException)
             {

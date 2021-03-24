@@ -166,7 +166,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                     {
                         foreach (var cell in openCellsGroupsPart[i])
                         {
-                            cell.Mark(openSegmentsPart[i]);
+                            //cell.Mark(openSegmentsPart[i]);
                         }
                     }
                 }

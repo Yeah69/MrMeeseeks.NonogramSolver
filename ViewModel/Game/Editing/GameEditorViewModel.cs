@@ -7,14 +7,19 @@ using System.Threading.Tasks;
 
 namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Editing
 {
-    public interface IGameEditorViewModel : IViewModelLayerBase
+    
+    public interface IGameEditorViewModelBase : IViewModelLayerBase
     {
         string Name { get; set; }
-        ICollectionEditorViewModel<ILineEditorViewModel> Columns { get; }
-        ICollectionEditorViewModel<ILineEditorViewModel> Rows { get; }
         Task<IGame> Result { get; }
         void Okay();
         void Cancel();
+    }
+    
+    public interface IGameEditorViewModel : IGameEditorViewModelBase
+    {
+        ICollectionEditorViewModel<ILineEditorViewModel> Columns { get; }
+        ICollectionEditorViewModel<ILineEditorViewModel> Rows { get; }
     }
 
     public class GameEditorViewModel : ViewModelLayerBase, IGameEditorViewModel

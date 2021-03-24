@@ -23,6 +23,10 @@
         <DependentUpon>GameProjectView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="TextualGameEditorView.axaml.cs">
+        <DependentUpon>TextualGameEditorView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

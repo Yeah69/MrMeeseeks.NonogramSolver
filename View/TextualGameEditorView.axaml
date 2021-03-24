@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:editing="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MrMeeseeks.NonogramSolver.View.TextualGameEditorView"
+             d:DataContext="{d:DesignInstance editing:ITextualGameEditorViewModel}">
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Name:" Margin="5, 2" VerticalAlignment="Center" FontSize="20" />
+            <TextBox Text="{Binding Name}" Margin="5, 2" FontSize="20" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+            <Button Content="Okay" Command="{Binding Okay}" />
+            <Button Content="Cancel" Command="{Binding Cancel}" />
+        </StackPanel>
+        <Grid x:Name="GameRoot" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" ColumnDefinitions="*" RowDefinitions="*,*">
+            <DockPanel Grid.Row="0" LastChildFill="True">
+                <TextBlock DockPanel.Dock="Top" Text="Columns:" />
+                <TextBox DockPanel.Dock="Bottom" AcceptsReturn="True" Text="{Binding Columns}" />
+            </DockPanel>
+            <DockPanel Grid.Row="1" LastChildFill="True">
+                <TextBlock DockPanel.Dock="Top" Text="Rows:" />
+                <TextBox DockPanel.Dock="Bottom" AcceptsReturn="True" Text="{Binding Rows}" />
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

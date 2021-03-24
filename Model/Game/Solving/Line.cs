@@ -15,8 +15,11 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         IReadOnlyList<ILineCell> Cells { get; }
         ILine? Previous { get; }
         ILine? Next { get; }
+        bool Cleared { get; }
         void AddCell(ILineCell cell);
         void InitializeAssignments();
+
+        bool TryToAssignOpenCells();
     }
 
     internal class Line : ModelLayerBase, ILine
@@ -62,6 +65,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         public ILine? Previous { get; set; }
 
         public ILine? Next { get; set; }
+        public bool Cleared => Segments.All(s => s.Cleared);
 
         public void AddCell(ILineCell cell)
         {
@@ -108,6 +112,69 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 cell.InitializePossibleAssignments(possibleAssignments);
 
             foreach (var segment in Segments) segment.InitializeTrivialAssignments();
+        }
+
+        public bool TryToAssignOpenCells()
+        {
+            var openCells = new HashSet<ILineCell>(Cells.Where(c => c.State == CellState.Marked && c.Assignment is null));
+            if (openCells.None()) return false;
+
+            var openSegments = new HashSet<ISegment>(Segments.Where(s => s.AssignedCells.None()));
+            var clearedSegments = new HashSet<ISegment>(Segments.Where(s => s.AssignedCells.Any()));
+
+            while (openCells.Any())
+            {
+                var seed = openCells.First();
+                var prevSegment = clearedSegments
+                    .Where(s => s.CurrentMaxCell?.Position < seed.Position)
+                    .MaxBy(s => s.CurrentMaxCell?.Position)
+                    .FirstOrDefault();
+                var minCell = prevSegment
+                    ?.CurrentMaxCell
+                    ?.Next ?? Cells[0];
+                var nextSegment = clearedSegments
+                    .Where(s => s.CurrentMinCell?.Position > seed.Position)
+                    .MinBy(s => s.CurrentMinCell?.Position)
+                    .FirstOrDefault();
+                var maxCell = nextSegment
+                    ?.CurrentMinCell
+                    ?.Previous ?? Cells[^1];
+
+                var openSegmentsPart = new List<ISegment>();
+                var iSegment = prevSegment?.Next ?? Segments[0];
+                while (iSegment is not null && iSegment != nextSegment)
+                {
+                    openSegmentsPart.Add(iSegment);
+                    iSegment = iSegment.Next;
+                }
+
+                var openCellsGroupsPart = openCells.Where(c =>
+                        c.Position >= minCell.Position && c.Position <= maxCell.Position)
+                    .OrderBy(c => c.Position)
+                    .Aggregate(new List<List<ILineCell>>(), (lol, c) =>
+                    {
+                        if (lol.Any() && lol.Last().Last().Position + 1 == c.Position)
+                            lol.Last().Add(c);
+                        else
+                            lol.Add(new List<ILineCell> {c});
+                        return lol;
+                    });
+
+                if (openCellsGroupsPart.Count == openSegmentsPart.Count)
+                {
+                    for (int i = 0; i < openCellsGroupsPart.Count; i++)
+                    {
+                        foreach (var cell in openCellsGroupsPart[i])
+                        {
+                            cell.Mark(openSegmentsPart[i]);
+                        }
+                    }
+                }
+                
+                openCells.ExceptWith(openCellsGroupsPart.SelectMany(l => l));
+            }
+
+            return false;
         }
 
         public void TryToAssignUnassigned()

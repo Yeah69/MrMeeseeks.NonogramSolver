@@ -12,6 +12,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         IReadOnlyList<ILine> Columns { get; }
         IReadOnlyList<ILine> Rows { get; }
         IReadOnlyList<ICell> Cells { get; }
+        bool Cleared { get; }
 
         void Solve();
 
@@ -79,6 +80,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         public IReadOnlyList<ILine> Rows { get; }
         
         public IReadOnlyList<ICell> Cells { get; }
+        public bool Cleared => Columns.Concat(Rows).All(l => l.Cleared);
 
         public void Solve()
         {
@@ -98,6 +100,11 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
             foreach (ILine line in Rows)
                 line.InitializeAssignments();
+
+            while (Cleared.Not() && Columns.Concat(Rows).Where(l => l.Cleared.Not()).Aggregate(false, (b, l) => b || l.TryToAssignOpenCells()))
+            {
+                
+            }
         }
 
         public abstract void Save();

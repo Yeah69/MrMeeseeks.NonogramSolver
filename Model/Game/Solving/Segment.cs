@@ -2,6 +2,7 @@ using MoreLinq;
 using MrMeeseeks.Extensions;
 using MrMeeseeks.Reactive.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive.Linq;
@@ -17,9 +18,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         ILineCell? CurrentMaxCell { get; }
 
-        ISegment? Previous { set; }
+        ISegment? Previous { get; set; }
 
-        ISegment? Next { set; }
+        ISegment? Next { get; set; }
 
         ImmutableHashSet<ILineCell> AssignedCells { get; }
         ImmutableHashSet<ILineCell> CurrentPossibleCells { get; }
@@ -40,6 +41,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         private ILineCell? _currentMaxCell;
         private ILineCell? _currentMinCell;
         private ImmutableHashSet<ILineCell> _currentPossibleCells = ImmutableHashSet<ILineCell>.Empty;
+        private bool _isInitialized = false;
 
         public Segment(int length)
         {
@@ -66,6 +68,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 foreach (var lineCell in temp) _observeExcludedCells.OnNext(lineCell);
                 CurrentPossibleMaxCell = _currentPossibleCells.MaxBy(c => c.Position).FirstOrDefault();
                 CurrentPossibleMinCell = _currentPossibleCells.MinBy(c => c.Position).FirstOrDefault();
+                
+                AdjustToPossibleAssignments();
             }
         }
 
@@ -85,8 +89,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             private set => SetIfChangedAndRaise(ref _currentMaxCell, value);
         }
 
-        public ISegment? Previous { private get; set; }
-        public ISegment? Next { private get; set; }
+        public ISegment? Previous { get; set; }
+        public ISegment? Next { get; set; }
 
         public ImmutableHashSet<ILineCell> AssignedCells
         {
@@ -97,14 +101,30 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 CurrentMaxCell = _assignedCells.MaxBy(c => c.Position).FirstOrDefault();
                 CurrentMinCell = _assignedCells.MinBy(c => c.Position).FirstOrDefault();
 
-                var minPossiblePosition = CurrentMinCell.Position - CountLeftToAssign;
-                var maxPossiblePosition = CurrentMaxCell.Position + CountLeftToAssign;
-                
-                foreach (var lineCell in CurrentPossibleCells.Where(c => c.Position < minPossiblePosition || c.Position > maxPossiblePosition))
+                if (CurrentMinCell is not null && CurrentMaxCell is not null)
                 {
-                    ExcludeCell(lineCell);
+                    // Mark all cells between min and max
+                    ILineCell? iCell = CurrentMinCell;
+                    while (iCell != CurrentMaxCell && iCell.Next is { } nextCell)
+                    {
+                        iCell = nextCell;
+                        if (iCell.Assignment == this)
+                            continue;
+                        if ((iCell.Assignment is not null && iCell.Assignment != this) || iCell.State == CellState.Excluded)
+                            throw new Exception();
+                        iCell.Mark(this);
+                    }
+                    
+                    // exclude all past possible borders
+                    var minPossiblePosition = CurrentMinCell.Position - CountLeftToAssign;
+                    var maxPossiblePosition = CurrentMaxCell.Position + CountLeftToAssign;
+                    foreach (var lineCell in CurrentPossibleCells.Where(c => c.Position < minPossiblePosition || c.Position > maxPossiblePosition))
+                    {
+                        ExcludeCell(lineCell);
+                    }
                 }
-                
+
+                // as soon as cleared exclude neighbors
                 if (Cleared)
                 {
                     OnPropertyChanged(nameof(Cleared));
@@ -113,6 +133,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                     if (CurrentMaxCell is {Next: { } nextToMaxCell})
                         nextToMaxCell.Exclude();
                 }
+                AdjustToPossibleAssignments();
             }
         }
 
@@ -120,6 +141,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         public void InitializeTrivialAssignments()
         {
+            _isInitialized = true;
+            
             CurrentPossibleCells
                 .Select(c => c
                     .ObservePropertyChanged(nameof(c.Assignment))
@@ -177,39 +200,53 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         {
             CurrentPossibleCells =
                 CurrentPossibleCells.Except(CurrentPossibleCells.Where(c => c.Position >= cell.Position));
-            AdjustToPossibleAssignments();
+            
         }
 
         private void TrimPossibleMin(ILineCell cell)
         {
             CurrentPossibleCells =
                 CurrentPossibleCells.Except(CurrentPossibleCells.Where(c => c.Position <= cell.Position));
-            AdjustToPossibleAssignments();
         }
 
         private void AssignCell(ILineCell cell)
         {
             if (AssignedCells.Contains(cell)) return;
             AssignedCells = AssignedCells.Add(cell);
-
-            AdjustToPossibleAssignments();
-
-            if (CurrentMinCell is null) return;
-
-            ILineCell? iCell = CurrentMinCell;
-            while (iCell != CurrentMaxCell && iCell.Next is { } nextCell)
-            {
-                iCell = nextCell;
-                if (iCell.Assignment == this)
-                    continue;
-                if ((iCell.Assignment is not null && iCell.Assignment != this) || iCell.State == CellState.Excluded)
-                    throw new Exception();
-                iCell.Mark(this);
-            }
         }
 
         private void AdjustToPossibleAssignments()
         {
+            if (_isInitialized.Not()) return;
+            
+            if (CurrentMaxCell is null && CurrentMinCell is null)
+            {
+                var consecutivePossibleOpenGroups = CurrentPossibleCells
+                    .Except(AssignedCells)
+                    .OrderBy(c => c.Position)
+                    .Aggregate(new List<List<ILineCell>>(), (listOfLists, cell) =>
+                    {
+                        if (listOfLists.Any() && listOfLists.Last().Last().Position + 1 == cell.Position)
+                        {
+                            listOfLists.Last().Add(cell);
+                        }
+                        else
+                        {
+                            listOfLists.Add(new List<ILineCell> {cell});
+                        }
+
+                        return listOfLists;
+                    });
+                foreach (var cell in consecutivePossibleOpenGroups
+                    .Where(consecutivePossibleOpenGroup => consecutivePossibleOpenGroup.Count < Length)
+                    .SelectMany(l => l))
+                {
+                    ExcludeCell(cell);
+                }
+                
+                InitializeTrivialAssignments();
+            }
+            
             if (CurrentMaxCell is null || CurrentMinCell is null) return;
 
             int assignedSpan = CurrentMaxCell.Position - CurrentMinCell.Position + 1;
@@ -230,7 +267,6 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 CurrentPossibleMaxCell = mCell;
             }
 
-            ///*
             if (CurrentPossibleMinCell?.Position > CurrentMinCell.Position - leftToAssign)
             {
                 int assignableSpan = CurrentPossibleMinCell?.Position - (CurrentMinCell.Position - leftToAssign) ?? 0;
@@ -249,7 +285,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 for (var i = 0; i < assignableSpan; i++) mCell = mCell?.Previous;
 
                 mCell?.Mark(this);
-            } //*/
+            }
         }
 
         private void ExcludeCell(ILineCell cell)

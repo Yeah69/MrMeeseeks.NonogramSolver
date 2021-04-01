@@ -290,7 +290,17 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         private void ExcludeCell(ILineCell cell)
         {
-            CurrentPossibleCells = CurrentPossibleCells.Except(cell.ToEnumerable());
+            if (CurrentMinCell is { } && CurrentMaxCell is { })
+            {
+                if (cell.Position >= CurrentMinCell.Position && cell.Position <= CurrentMaxCell.Position)
+                    throw new Exception();
+                if (cell.Position < CurrentMinCell.Position)
+                    TrimPossibleMin(cell);
+                else
+                    TrimPossibleMax(cell);
+            }
+            else
+                CurrentPossibleCells = CurrentPossibleCells.Except(cell.ToEnumerable());
         }
     }
 }

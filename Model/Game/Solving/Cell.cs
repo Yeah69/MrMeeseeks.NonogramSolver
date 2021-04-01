@@ -164,6 +164,12 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             public void InitializePossibleAssignments(ImmutableHashSet<ISegment> set)
             {
                 PossibleAssignments = set;
+
+                PossibleAssignments
+                    .Select(s => s.ObserveExcludedCells.Where(c => c == this).Select(_ => s))
+                    .Merge()
+                    .Subscribe(ExcludePossibleAssignment);
+                
                 foreach (var segment in set)
                     segment.PossibleAssignCell(this);
             }

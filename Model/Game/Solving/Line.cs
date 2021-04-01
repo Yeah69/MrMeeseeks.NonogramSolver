@@ -30,7 +30,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         {
             Segments = segments;
 
-            ISegment? prevSegment = segments.First();
+            ISegment prevSegment = segments[0];
             foreach (var segment in segments.Skip(1))
             {
                 segment.Previous = prevSegment;
@@ -74,8 +74,6 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         public void InitializeAssignments()
         {
-            
-            
             Dictionary<ILineCell, ImmutableHashSet<ISegment>> cellsToPossibleSegments = new();
             var i = 0;
             var possibleSegmentsList = ImmutableHashSet.Create<ISegment>();

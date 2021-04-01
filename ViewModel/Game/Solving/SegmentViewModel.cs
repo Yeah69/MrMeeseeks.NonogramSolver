@@ -30,6 +30,6 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
             ? Brushes.DarkGray
             : Brushes.Black;
 
-        public string ToolTip => $"P. Cells: {string.Join(", ", _model.CurrentPossibleCells.Except(_model.AssignedCells).Select(c => c.Position))}";
+        public string ToolTip => $"P. Cells: {string.Join(", ", _model.CurrentPossibleCells.Except(_model.AssignedCells).Select(c => c.Position + 1).OrderBy(p => p))}";
     }
 }

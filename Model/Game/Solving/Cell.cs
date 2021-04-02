@@ -1,9 +1,7 @@
 using MrMeeseeks.Extensions;
-using MrMeeseeks.Reactive.Extensions;
 using System;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Reactive.Linq;
 
 namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
@@ -24,10 +22,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         ILineCell? Next { get; set; }
         CellState State { get; }
         ImmutableHashSet<ISegment> PossibleAssignments { get; }
-        void Mark(ISegment segment);
-        void Exclude();
-        public void InitializePossibleAssignments(ImmutableHashSet<ISegment> set);
-        public void ExcludePossibleAssignment(ISegment segment);
+        void InitializePossibleAssignments(ImmutableHashSet<ISegment> set);
+
+        bool Check();
     }
 
     internal class Cell : ModelLayerBase, ICell
@@ -107,23 +104,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             protected readonly Cell Parent;
             private ImmutableHashSet<ISegment> _possibleAssignments = ImmutableHashSet<ISegment>.Empty;
 
-            protected LineCellBase(Cell parent)
-            {
-                Parent = parent;
-
-                parent
-                    .ObservePropertyChanged(nameof(parent.State))
-                    .Where(_ => State == CellState.Marked && Assignment is null)
-                    .Subscribe(_ =>
-                    {
-                        if (PossibleAssignments.Count == 1)
-                            Mark(PossibleAssignments.First());
-                        else if (Previous?.Assignment is { } previousAssignment)
-                            Mark(previousAssignment);
-                        else if (Next?.Assignment is { } nextAssignment)
-                            Mark(nextAssignment);
-                    });
-            }
+            protected LineCellBase(Cell parent) => Parent = parent;
 
             public ImmutableHashSet<ISegment> PossibleAssignments
             {
@@ -148,49 +129,65 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             public abstract ILineCell? Previous { get; set; }
             public abstract ILineCell? Next { get; set; }
 
-            public virtual void Mark(ISegment segment)
-            {
-                PossibleAssignments = ImmutableHashSet<ISegment>.Empty.Add(segment);
-            }
+            protected virtual void Mark(ISegment segment) => 
+                PossibleAssignments = PossibleAssignments.Intersect(segment.ToEnumerable());
 
             public CellState State => Parent.State;
 
-            public void Exclude()
+            private void Exclude()
             {
                 Parent.Exclude();
                 PossibleAssignments = ImmutableHashSet<ISegment>.Empty;
             }
 
-            public void InitializePossibleAssignments(ImmutableHashSet<ISegment> set)
-            {
+            public void InitializePossibleAssignments(ImmutableHashSet<ISegment> set) => 
                 PossibleAssignments = set;
 
-                PossibleAssignments
-                    .Select(s => s.ObserveExcludedCells.Where(c => c == this).Select(_ => s))
-                    .Merge()
-                    .Subscribe(ExcludePossibleAssignment);
-                
-                foreach (var segment in set)
-                    segment.PossibleAssignCell(this);
-            }
-
-            public void ExcludePossibleAssignment(ISegment segment)
+            public bool Check()
             {
-                PossibleAssignments = PossibleAssignments.Except(segment.ToEnumerable());
-            }
+                if (State == CellState.Excluded || Assignment is { })
+                    return false;
 
-            protected void SubscribeToNeighborAssignment(ILineCell neighbor)
-            {
-                neighbor
-                    .ObservePropertyChanged(nameof(neighbor.Assignment))
-                    .Where(_ => neighbor.Assignment is not null)
-                    .Subscribe(_ =>
+                var assignedSegment = PossibleAssignments.FirstOrDefault(s => s.AssignedCells.Contains(this));
+                if(State == CellState.Marked)
+                    assignedSegment = assignedSegment switch
                     {
-                        if (State == CellState.Marked 
-                         && Assignment is null 
-                         && neighbor.Assignment is not null) 
-                            Mark(neighbor.Assignment);
-                    });
+                        null when Previous?.Assignment is { } previousAssignment => previousAssignment,
+                        null when Next?.Assignment is { } nextAssignment => nextAssignment,
+                        _ => assignedSegment
+                    };
+                if (assignedSegment is not null)
+                {
+                    Mark(assignedSegment);
+                    PossibleAssignments = ImmutableHashSet.Create(assignedSegment);
+                    return true;
+                }
+
+                var newExcludedPossibleAssignments = PossibleAssignments
+                    .Where(s => s.CurrentPossibleCells.Contains(this).Not())
+                    .ToList();
+                
+                var ret = false;
+
+                if (newExcludedPossibleAssignments.Any())
+                {
+                    ret = true;
+                    PossibleAssignments = PossibleAssignments.Except(newExcludedPossibleAssignments);
+                }
+                
+                switch (PossibleAssignments.Count)
+                {
+                    case 1 when State == CellState.Marked:
+                        Mark(PossibleAssignments.First());
+                        ret = true;
+                        break;
+                    case 0:
+                        Exclude();
+                        ret = true;
+                        break;
+                }
+
+                return ret;
             }
         }
 
@@ -220,31 +217,18 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             public override ILineCell? Previous
             {
                 get => Parent.Up;
-                set
-                {
-                    Parent.Up = value;
-                    if (value is not null)
-                        SubscribeToNeighborAssignment(value);
-                }
+                set => Parent.Up = value;
             }
 
             public override ILineCell? Next
             {
                 get => Parent.Down;
-                set
-                {
-                    Parent.Down = value;
-                    if (value is not null)
-                        SubscribeToNeighborAssignment(value);
-                }
+                set => Parent.Down = value;
             }
 
-            public void Dispose()
-            {
-                _subscription.Dispose();
-            }
+            public void Dispose() => _subscription.Dispose();
 
-            public override void Mark(ISegment segment)
+            protected override void Mark(ISegment segment)
             {
                 Parent.MarkVertical(segment);
                 base.Mark(segment);
@@ -277,31 +261,18 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             public override ILineCell? Previous
             {
                 get => Parent.Left;
-                set
-                {
-                    Parent.Left = value;
-                    if (value is not null)
-                        SubscribeToNeighborAssignment(value);
-                }
+                set => Parent.Left = value;
             }
 
             public override ILineCell? Next
             {
                 get => Parent.Right;
-                set
-                {
-                    Parent.Right = value;
-                    if (value is not null)
-                        SubscribeToNeighborAssignment(value);
-                }
+                set => Parent.Right = value;
             }
 
-            public void Dispose()
-            {
-                _subscription.Dispose();
-            }
+            public void Dispose() => _subscription.Dispose();
 
-            public override void Mark(ISegment segment)
+            protected override void Mark(ISegment segment)
             {
                 Parent.MarkHorizontal(segment);
                 base.Mark(segment);

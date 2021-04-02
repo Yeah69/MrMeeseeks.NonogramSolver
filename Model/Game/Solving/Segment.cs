@@ -1,12 +1,9 @@
 using MoreLinq;
 using MrMeeseeks.Extensions;
-using MrMeeseeks.Reactive.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 
 namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 {
@@ -18,30 +15,26 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         ILineCell? CurrentMaxCell { get; }
 
-        ISegment? Previous { get; set; }
+        ISegment? Previous { set; }
 
-        ISegment? Next { get; set; }
+        ISegment? Next { set; }
 
         ImmutableHashSet<ILineCell> AssignedCells { get; }
         ImmutableHashSet<ILineCell> CurrentPossibleCells { get; }
 
         bool Cleared => Length == AssignedCells.Count;
+        
+        void InitializePossibleAssignments(ImmutableHashSet<ILineCell> set);
 
-        IObservable<ILineCell> ObserveExcludedCells { get; }
-
-        void PossibleAssignCell(ILineCell cell);
-
-        void InitializeTrivialAssignments();
+        bool Check();
     }
 
     internal class Segment : ModelLayerBase, ISegment
     {
-        private readonly Subject<ILineCell> _observeExcludedCells = new();
         private ImmutableHashSet<ILineCell> _assignedCells = ImmutableHashSet<ILineCell>.Empty;
         private ILineCell? _currentMaxCell;
         private ILineCell? _currentMinCell;
         private ImmutableHashSet<ILineCell> _currentPossibleCells = ImmutableHashSet<ILineCell>.Empty;
-        private bool _isInitialized = false;
 
         public Segment(int length)
         {
@@ -56,24 +49,16 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         private bool Cleared => Length == AssignedCells.Count;
 
-        private int CountLeftToAssign => Length - AssignedCells.Count;
-
         public ImmutableHashSet<ILineCell> CurrentPossibleCells
         {
             get => _currentPossibleCells;
             private set
             {
-                ImmutableHashSet<ILineCell> temp = _currentPossibleCells.Except(value);
                 _currentPossibleCells = value;
-                foreach (var lineCell in temp) _observeExcludedCells.OnNext(lineCell);
                 CurrentPossibleMaxCell = _currentPossibleCells.MaxBy(c => c.Position).FirstOrDefault();
                 CurrentPossibleMinCell = _currentPossibleCells.MinBy(c => c.Position).FirstOrDefault();
-                
-                AdjustToPossibleAssignments();
             }
         }
-
-        public IObservable<ILineCell> ObserveExcludedCells => _observeExcludedCells.AsObservable();
 
         public int Length { get; }
 
@@ -101,206 +86,115 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 CurrentMaxCell = _assignedCells.MaxBy(c => c.Position).FirstOrDefault();
                 CurrentMinCell = _assignedCells.MinBy(c => c.Position).FirstOrDefault();
 
-                if (CurrentMinCell is not null && CurrentMaxCell is not null)
-                {
-                    // Mark all cells between min and max
-                    ILineCell? iCell = CurrentMinCell;
-                    while (iCell != CurrentMaxCell && iCell.Next is { } nextCell)
-                    {
-                        iCell = nextCell;
-                        if (iCell.Assignment == this)
-                            continue;
-                        if ((iCell.Assignment is not null && iCell.Assignment != this) || iCell.State == CellState.Excluded)
-                            throw new Exception();
-                        iCell.Mark(this);
-                    }
-                    
-                    // exclude all past possible borders
-                    var minPossiblePosition = CurrentMinCell.Position - CountLeftToAssign;
-                    var maxPossiblePosition = CurrentMaxCell.Position + CountLeftToAssign;
-                    foreach (var lineCell in CurrentPossibleCells.Where(c => c.Position < minPossiblePosition || c.Position > maxPossiblePosition))
-                    {
-                        ExcludeCell(lineCell);
-                    }
-                }
-
                 // as soon as cleared exclude neighbors
-                if (Cleared)
-                {
-                    OnPropertyChanged(nameof(Cleared));
-                    if (CurrentMinCell is {Previous: { } prevToMinCell})
-                        prevToMinCell.Exclude();
-                    if (CurrentMaxCell is {Next: { } nextToMaxCell})
-                        nextToMaxCell.Exclude();
-                }
-                AdjustToPossibleAssignments();
+                if (Cleared) OnPropertyChanged(nameof(Cleared));
             }
         }
 
-        public void PossibleAssignCell(ILineCell cell) => CurrentPossibleCells = CurrentPossibleCells.Add(cell);
+        public void InitializePossibleAssignments(ImmutableHashSet<ILineCell> set) => CurrentPossibleCells = set;
 
-        public void InitializeTrivialAssignments()
+        public bool Check()
         {
-            _isInitialized = true;
+            var ret = false;
+
+            // Adjust CurrentPossibleCells
             
-            CurrentPossibleCells
-                .Select(c => c
-                    .ObservePropertyChanged(nameof(c.Assignment))
-                    .Select(_ => c))
-                .Merge()
-                .Where(c => c.Assignment == this && AssignedCells.Contains(c).Not())
-                .Subscribe(AssignCell);
+            var minPossiblePosition = Previous?.CurrentMaxCell is {} prevMaxCell 
+                ? prevMaxCell.Position + 2 
+                : 0;
+            var maxPossiblePosition = Next?.CurrentMinCell is {} nextMinCell 
+                ? nextMinCell.Position - 2 
+                : int.MaxValue;
+            var newExcludesOfPossibleCells = CurrentPossibleCells.Where(c =>
+                (c.State == CellState.Excluded || c.Assignment is not null && c.Assignment != this)
+                || c.Position < minPossiblePosition 
+                || c.Position > maxPossiblePosition)
+                .ToList();
 
-            CurrentPossibleCells
-                .Select(c => c
-                    .ObservePropertyChanged(nameof(c.Assignment), nameof(c.State))
-                    .Select(_ => c))
-                .Merge()
-                .Where(c => ((c.Assignment is not null && c.Assignment != this) || c.State == CellState.Excluded)
-                         && CurrentPossibleCells.Contains(c))
-                .Subscribe(ExcludeCell);
-
-            Previous
-                ?.ObservePropertyChanged(nameof(Previous.CurrentMaxCell))
-                .Subscribe(_ =>
-                {
-                    if (Previous?.CurrentMaxCell?.Next is { } minExclude) TrimPossibleMin(minExclude);
-                });
-
-            Next
-                ?.ObservePropertyChanged(nameof(Next.CurrentMinCell))
-                .Subscribe(_ =>
-                {
-                    if (Next?.CurrentMinCell?.Previous is { } maxExclude) TrimPossibleMax(maxExclude);
-                });
-
-            foreach (var currentPossibleCell in CurrentPossibleCells)
-                if (currentPossibleCell.Assignment == this)
-                    AssignCell(currentPossibleCell);
-                else if ((currentPossibleCell.Assignment is { } someSegment && someSegment != this) ||
-                         currentPossibleCell.State == CellState.Excluded)
-                    ExcludeCell(currentPossibleCell);
-
-            if (CurrentPossibleMaxCell is null || CurrentPossibleMinCell is null) return;
-            int span = CurrentPossibleMaxCell.Position - CurrentPossibleMinCell.Position + 1;
-            int margin = span - Length;
-            if (margin >= Length) return;
-            int trivialSpan = Length - margin;
-            ILineCell? iCell = CurrentPossibleMinCell;
-            for (var i = 0; i < margin; i++)
-                iCell = iCell?.Next;
-            for (var i = 0; i < trivialSpan; i++)
+            if (newExcludesOfPossibleCells.Any())
             {
-                iCell?.Mark(this);
-                iCell = iCell?.Next;
+                ret = true;
+                CurrentPossibleCells = CurrentPossibleCells.Except(newExcludesOfPossibleCells);
             }
-        }
 
-        private void TrimPossibleMax(ILineCell cell)
-        {
-            CurrentPossibleCells =
-                CurrentPossibleCells.Except(CurrentPossibleCells.Where(c => c.Position >= cell.Position));
+            // Adjust AssignedCells
+
+            var unknownAssignedCells = CurrentPossibleCells
+                .Except(AssignedCells)
+                .Where(c => c.Assignment == this)
+                .ToList();
             
-        }
-
-        private void TrimPossibleMin(ILineCell cell)
-        {
-            CurrentPossibleCells =
-                CurrentPossibleCells.Except(CurrentPossibleCells.Where(c => c.Position <= cell.Position));
-        }
-
-        private void AssignCell(ILineCell cell)
-        {
-            if (AssignedCells.Contains(cell)) return;
-            AssignedCells = AssignedCells.Add(cell);
-        }
-
-        private void AdjustToPossibleAssignments()
-        {
-            if (_isInitialized.Not()) return;
-            
-            if (CurrentMaxCell is null && CurrentMinCell is null)
+            if (unknownAssignedCells.Any())
             {
-                var consecutivePossibleOpenGroups = CurrentPossibleCells
+                ret = true;
+                var newAssignedCells = ImmutableHashSet.Create(AssignedCells.Concat(unknownAssignedCells).ToArray());
+                var minPosition = newAssignedCells.MinBy(c => c.Position).First().Position;
+                var maxPosition = newAssignedCells.MaxBy(c => c.Position).First().Position;
+                newAssignedCells = CurrentPossibleCells
+                    .Where(c => newAssignedCells.Contains(c).Not() && c.Position >= minPosition &&
+                                c.Position <= maxPosition)
+                    .Aggregate(newAssignedCells, (cells, cell) => cells.Add(cell));
+                AssignedCells = newAssignedCells;
+            }
+
+            // If possible exclude too small possible cell groups
+
+            var excludeCellGroups = CurrentPossibleCells
+                .OrderBy(c => c.Position)
+                .Aggregate(new List<List<ILineCell>>(), (lol, c) =>
+                {
+                    if(lol.None() || lol.Last().Last().Position + 1 < c.Position)
+                        lol.Add(new List<ILineCell> { c });
+                    else
+                        lol.Last().Add(c);
+                    return lol;
+                })
+                .Where(g => g.Count < Length)
+                .SelectMany(g => g)
+                .ToList();
+            if (excludeCellGroups.Any())
+            {
+                ret = true;
+                CurrentPossibleCells = CurrentPossibleCells.Except(excludeCellGroups);
+            }
+
+            if (CurrentPossibleMinCell is not null 
+             && CurrentPossibleMaxCell is not null
+             && CurrentPossibleMaxCell.Position - CurrentPossibleMinCell.Position + 1 < 2 * Length)
+            {
+                var assignableLength =
+                    2 * Length - (CurrentPossibleMaxCell.Position - CurrentPossibleMinCell.Position + 1);
+                var margin = Length - assignableLength;
+                var min = CurrentPossibleMinCell.Position + margin;
+                var max = CurrentPossibleMinCell.Position + margin + assignableLength - 1;
+                var toAssign = CurrentPossibleCells
+                    .Where(c => c.Position >= min && c.Position <= max)
                     .Except(AssignedCells)
-                    .OrderBy(c => c.Position)
-                    .Aggregate(new List<List<ILineCell>>(), (listOfLists, cell) =>
-                    {
-                        if (listOfLists.Any() && listOfLists.Last().Last().Position + 1 == cell.Position)
-                        {
-                            listOfLists.Last().Add(cell);
-                        }
-                        else
-                        {
-                            listOfLists.Add(new List<ILineCell> {cell});
-                        }
-
-                        return listOfLists;
-                    });
-                foreach (var cell in consecutivePossibleOpenGroups
-                    .Where(consecutivePossibleOpenGroup => consecutivePossibleOpenGroup.Count < Length)
-                    .SelectMany(l => l))
+                    .ToArray();
+                if (toAssign.Any())
                 {
-                    ExcludeCell(cell);
+                    ret = true;
+                    AssignedCells = 
+                        toAssign.Aggregate(AssignedCells, (current, cell) => current.Add(cell));
                 }
-                
-                InitializeTrivialAssignments();
+            }
+
+            if (CurrentMinCell is not null
+             && CurrentMaxCell is not null)
+            {
+                var upperExclude = CurrentMinCell.Position + Length;
+                var lowerExclude = CurrentMaxCell.Position - Length;
+                var excludes = CurrentPossibleCells
+                    .Where(c => c.Position <= lowerExclude || c.Position >= upperExclude)
+                    .ToList();
+                if (excludes.Any())
+                {
+                    ret = true;
+                    CurrentPossibleCells = CurrentPossibleCells.Except(excludes);
+                }
             }
             
-            if (CurrentMaxCell is null || CurrentMinCell is null) return;
-
-            int assignedSpan = CurrentMaxCell.Position - CurrentMinCell.Position + 1;
-            int leftToAssign = Length - assignedSpan;
-            if (CurrentPossibleMinCell?.Position < CurrentMinCell.Position - leftToAssign)
-            {
-                ILineCell? mCell = CurrentMinCell;
-                for (var i = 0; i < leftToAssign; i++)
-                    mCell = mCell?.Previous;
-                CurrentPossibleMinCell = mCell;
-            }
-
-            if (CurrentPossibleMaxCell?.Position > CurrentMaxCell.Position + leftToAssign)
-            {
-                ILineCell? mCell = CurrentMaxCell;
-                for (var i = 0; i < leftToAssign; i++)
-                    mCell = mCell?.Next;
-                CurrentPossibleMaxCell = mCell;
-            }
-
-            if (CurrentPossibleMinCell?.Position > CurrentMinCell.Position - leftToAssign)
-            {
-                int assignableSpan = CurrentPossibleMinCell?.Position - (CurrentMinCell.Position - leftToAssign) ?? 0;
-                ILineCell? mCell = CurrentMaxCell;
-                for (var i = 0; i < assignableSpan; i++) mCell = mCell?.Next;
-
-                mCell?.Mark(this);
-            }
-
-            assignedSpan = CurrentMaxCell.Position - CurrentMinCell.Position + 1;
-            leftToAssign = Length - assignedSpan;
-            if (CurrentPossibleMaxCell?.Position < CurrentMaxCell.Position + leftToAssign)
-            {
-                int? assignableSpan = CurrentMaxCell?.Position + leftToAssign - CurrentPossibleMaxCell?.Position;
-                ILineCell? mCell = CurrentMinCell;
-                for (var i = 0; i < assignableSpan; i++) mCell = mCell?.Previous;
-
-                mCell?.Mark(this);
-            }
-        }
-
-        private void ExcludeCell(ILineCell cell)
-        {
-            if (CurrentMinCell is { } && CurrentMaxCell is { })
-            {
-                if (cell.Position >= CurrentMinCell.Position && cell.Position <= CurrentMaxCell.Position)
-                    throw new Exception();
-                if (cell.Position < CurrentMinCell.Position)
-                    TrimPossibleMin(cell);
-                else
-                    TrimPossibleMax(cell);
-            }
-            else
-                CurrentPossibleCells = CurrentPossibleCells.Except(cell.ToEnumerable());
+            return ret;
         }
     }
 }

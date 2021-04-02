@@ -57,20 +57,6 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 if (cell.X > 0) iCell.Horizontal.Previous = Cells[i - 1].Horizontal;
                 if (cell.X < Rows.Count - 1) iCell.Horizontal.Next = Cells[i + 1].Horizontal;
             }
-
-            for (int y = 0; y < Rows.Count; y++)
-            {
-                var line = (Line) Rows[y];
-                if (y > 0) line.Previous = Rows[y - 1];
-                if (y < Rows.Count - 1) line.Next = Rows[y + 1];
-            }
-            
-            for (int x = 0; x < Columns.Count; x++)
-            {
-                var line = (Line) Columns[x];
-                if (x > 0) line.Previous = Columns[x - 1];
-                if (x < Rows.Count - 1) line.Next = Columns[x + 1];
-            }
         }
         
         public string Name { get; }
@@ -84,16 +70,6 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         public void Solve()
         {
-            // Exclude empty lines
-            foreach (var cell in Columns
-                .Where(c => c.Segments.None())
-                .SelectMany(c => c.Cells)
-                .Concat(Rows
-                    .Where(c => c.Segments.None())
-                    .SelectMany(c => c.Cells))
-                .Distinct())
-                cell.Exclude();
-            
             // Do the match thing
             foreach (ILine line in Columns)
                 line.InitializeAssignments();
@@ -101,7 +77,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             foreach (ILine line in Rows)
                 line.InitializeAssignments();
 
-            while (Cleared.Not() && Columns.Concat(Rows).Where(l => l.Cleared.Not()).Aggregate(false, (b, l) => b || l.TryToAssignOpenCells()))
+            while (Columns.Concat(Rows).Aggregate(false, (b, l) => l.Check() | b))
             {
                 
             }

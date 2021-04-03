@@ -7,6 +7,7 @@ using MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
 {
@@ -125,7 +126,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel.Game.Solving
         public int ColumnCount { get; }
         public int BlockColumnCount { get; }
 
-        public void Solve() => _model.Solve();
+        public void Solve() => Task.Run(() =>_model.Solve());
         public void Delete() => _gameProject.Delete(_model);
         public IGameEditorViewModel CreateEditableCopy()
         {

@@ -15,6 +15,10 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         ILineCell? CurrentMaxCell { get; }
 
+        ILineCell? CurrentPossibleMaxCell { get; }
+
+        ILineCell? CurrentPossibleMinCell { get; }
+
         ISegment? Previous { set; }
 
         ISegment? Next { set; }
@@ -43,9 +47,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 : throw new ArgumentException("Segment length has to be greater than zero.");
         }
 
-        private ILineCell? CurrentPossibleMaxCell { get; set; }
+        public ILineCell? CurrentPossibleMaxCell { get; private set; }
 
-        private ILineCell? CurrentPossibleMinCell { get; set; }
+        public ILineCell? CurrentPossibleMinCell { get; private set; }
 
         private bool Cleared => Length == AssignedCells.Count;
 
@@ -98,13 +102,26 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             var ret = false;
 
             // Adjust CurrentPossibleCells
-            
-            var minPossiblePosition = Previous?.CurrentMaxCell is {} prevMaxCell 
-                ? prevMaxCell.Position + 2 
-                : 0;
-            var maxPossiblePosition = Next?.CurrentMinCell is {} nextMinCell 
-                ? nextMinCell.Position - 2 
-                : int.MaxValue;
+
+            var minPossiblePosition = 0;
+            if (Previous is { } previous)
+            {
+                if (previous.CurrentPossibleMinCell is { } prevPossibleMinCell)
+                    minPossiblePosition = Math.Max(minPossiblePosition,
+                        prevPossibleMinCell.Position + previous.Length + 1);
+                if (previous.CurrentMaxCell is { } prevMaxCell)
+                    minPossiblePosition = Math.Max(minPossiblePosition, prevMaxCell.Position + 2);
+            }
+
+            var maxPossiblePosition = int.MaxValue;
+            if (Next is { } next)
+            {
+                if (next.CurrentPossibleMaxCell is { } nextPossibleMaxCell)
+                    maxPossiblePosition = Math.Min(maxPossiblePosition,
+                        nextPossibleMaxCell.Position - next.Length - 1);
+                if (next.CurrentMinCell is { } nextMinCell)
+                    maxPossiblePosition = Math.Min(maxPossiblePosition, nextMinCell.Position - 2);
+            }
             var newExcludesOfPossibleCells = CurrentPossibleCells.Where(c =>
                 (c.State == CellState.Excluded || c.Assignment is not null && c.Assignment != this)
                 || c.Position < minPossiblePosition 

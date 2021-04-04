@@ -154,6 +154,29 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 }
             }
 
+            if (groupsOfNeighboredMarkedButUnassignedCells.Any() && Segments.Count >= 2
+             && groupsOfNeighboredMarkedButUnassignedCells[0].Count == Segments[0].Length
+             && Segments[0].AssignedCells.None() && Segments[1].AssignedCells.None()
+             && Cells[groupsOfNeighboredMarkedButUnassignedCells[0].Count].State == CellState.Undecided
+             && groupsOfNeighboredMarkedButUnassignedCells[0].MinBy(c => c.Position).First().Position ==
+                groupsOfNeighboredMarkedButUnassignedCells.Count + 1)
+            {
+                ret = true;
+                Cells[groupsOfNeighboredMarkedButUnassignedCells[0].Count].ExcludeAllPossibleAssignments();
+            }
+
+            if (groupsOfNeighboredMarkedButUnassignedCells.Any() 
+             && Segments.Count >= 2
+             && groupsOfNeighboredMarkedButUnassignedCells[^1].Count == Segments[^1].Length
+             && Segments[^1].AssignedCells.None() && Segments[^2].AssignedCells.None()
+             && Cells[^(groupsOfNeighboredMarkedButUnassignedCells[^1].Count + 1)].State == CellState.Undecided
+             && groupsOfNeighboredMarkedButUnassignedCells[^1].MaxBy(c => c.Position).First().Position ==
+                Cells.Count - groupsOfNeighboredMarkedButUnassignedCells.Count - 2)
+            {
+                ret = true;
+                Cells[^(groupsOfNeighboredMarkedButUnassignedCells[^1].Count + 1)].ExcludeAllPossibleAssignments();
+            }
+
             return ret;
         }
     }

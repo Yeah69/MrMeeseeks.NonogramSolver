@@ -1,3 +1,4 @@
+using MoreLinq;
 using MrMeeseeks.Extensions;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -82,7 +83,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             foreach (var (cell, possibleAssignments) in cellsToPossibleSegments)
                 cell.InitializePossibleAssignments(possibleAssignments);
 
-            IEnumerable<IGrouping<ISegment, ILineCell>>? segmentToCellsGroups = cellsToPossibleSegments
+            var segmentToCellsGroups = cellsToPossibleSegments
                 .SelectMany(kvp => kvp.Value.Select(s => (kvp.Key, s)))
                 .GroupBy(t => t.s, t => t.Key);
 
@@ -123,6 +124,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                         lol.Last().Add(c);
                     return lol;
                 });
+            
             foreach (var group in groupsOfNeighboredMarkedButUnassignedCells)
             {
                 var tooSmallPossibleAssignments =
@@ -135,6 +137,20 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                     ret = true;
                     foreach (var (s, c) in tooSmallPossibleAssignments)
                         c.ExcludePossibleAssignment(s);
+                }
+
+                if (group.SelectMany(c => c.PossibleAssignments).All(s => s.Length == group.Count))
+                {
+                    if (group.MaxBy(c => c.Position).First().Next is ILineCellForLine maxCell)
+                    {
+                        ret = true;
+                        maxCell.ExcludeAllPossibleAssignments();
+                    }
+                    if (group.MinBy(c => c.Position).First().Previous is ILineCellForLine minCell)
+                    {
+                        ret = true;
+                        minCell.ExcludeAllPossibleAssignments();
+                    }
                 }
             }
 

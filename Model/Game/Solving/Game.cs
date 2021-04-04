@@ -77,10 +77,13 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             foreach (ILine line in Rows)
                 line.InitializeAssignments();
 
-            while (Columns.Concat(Rows).Aggregate(false, (b, l) => l.Check() | b))
+            do
             {
-                
-            }
+                while (Columns.Concat(Rows).Aggregate(false, (b, l) => l.CheckChildren() | b))
+                {
+
+                }
+            } while (Columns.Concat(Rows).Aggregate(false, (b, l) => l.Check() | b));
         }
 
         public abstract void Save();

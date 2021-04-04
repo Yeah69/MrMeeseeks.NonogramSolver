@@ -9,8 +9,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
     public interface ICell : IModelLayerBase
     {
-        ILineCell Vertical { get; }
-        ILineCell Horizontal { get; }
+        ILineCellForLine Vertical { get; }
+        ILineCellForLine Horizontal { get; }
         CellState State { get; }
     }
 
@@ -25,6 +25,12 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
         void InitializePossibleAssignments(ImmutableHashSet<ISegment> set);
 
         bool Check();
+    }
+
+    public interface ILineCellForLine : ILineCell
+    {
+        void ExcludePossibleAssignment(ISegment segment);
+        void ExcludeAllPossibleAssignments();
     }
 
     internal class Cell : ModelLayerBase, ICell
@@ -63,8 +69,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         public ILineCell? Right { private get; set; }
 
-        public ILineCell Vertical { get; }
-        public ILineCell Horizontal { get; }
+        public ILineCellForLine Vertical { get; }
+        public ILineCellForLine Horizontal { get; }
 
         public CellState State
         {
@@ -99,7 +105,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                 : CellState.Excluded;
         }
 
-        private abstract class LineCellBase : ModelLayerBase, ILineCell
+        private abstract class LineCellBase : ModelLayerBase, ILineCellForLine
         {
             protected readonly Cell Parent;
             private ImmutableHashSet<ISegment> _possibleAssignments = ImmutableHashSet<ISegment>.Empty;
@@ -189,6 +195,10 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
                 return ret;
             }
+
+            public void ExcludePossibleAssignment(ISegment segment) => PossibleAssignments = PossibleAssignments.Except(segment.ToEnumerable());
+
+            public void ExcludeAllPossibleAssignments() => PossibleAssignments = ImmutableHashSet<ISegment>.Empty;
         }
 
         private class VerticalLineCell : LineCellBase, IDisposable

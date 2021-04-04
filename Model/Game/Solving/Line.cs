@@ -8,17 +8,19 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
     public interface ILine : IModelLayerBase
     {
         IReadOnlyList<ISegment> Segments { get; }
-        IReadOnlyList<ILineCell> Cells { get; }
+        IReadOnlyList<ILineCellForLine> Cells { get; }
         bool Cleared { get; }
-        void AddCell(ILineCell cell);
+        void AddCell(ILineCellForLine cell);
         void InitializeAssignments();
+
+        bool CheckChildren();
 
         bool Check();
     }
 
     internal class Line : ModelLayerBase, ILine
     {
-        private readonly List<ILineCell> _cells = new();
+        private readonly List<ILineCellForLine> _cells = new();
 
         public Line(IReadOnlyList<ISegment> segments)
         {
@@ -37,14 +39,11 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
         public IReadOnlyList<ISegment> Segments { get; }
 
-        public IReadOnlyList<ILineCell> Cells { get; }
-        
+        public IReadOnlyList<ILineCellForLine> Cells { get; }
+
         public bool Cleared => Segments.All(s => s.Cleared);
 
-        public void AddCell(ILineCell cell)
-        {
-            _cells.Add(cell);
-        }
+        public void AddCell(ILineCellForLine cell) => _cells.Add(cell);
 
         public void InitializeAssignments()
         {
@@ -83,10 +82,10 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             foreach (var (cell, possibleAssignments) in cellsToPossibleSegments)
                 cell.InitializePossibleAssignments(possibleAssignments);
 
-            var segmentToCellsGroups = cellsToPossibleSegments
+            IEnumerable<IGrouping<ISegment, ILineCell>>? segmentToCellsGroups = cellsToPossibleSegments
                 .SelectMany(kvp => kvp.Value.Select(s => (kvp.Key, s)))
                 .GroupBy(t => t.s, t => t.Key);
-            
+
             foreach (var segmentToCellsGroup in segmentToCellsGroups)
                 segmentToCellsGroup
                     .Key
@@ -95,7 +94,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                             segmentToCellsGroup.ToArray()));
         }
 
-        public bool Check()
+        public bool CheckChildren()
         {
             var isChecked = false;
             while (Inner()) isChecked = true;
@@ -103,9 +102,43 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
             bool Inner()
             {
-                var ret = Cells.Aggregate(false, (b, c) => c.Check() | b);
-                return Segments.Aggregate(ret, (b, s) => s.Check() | b);
+                bool ret = Cells.Aggregate(false, (b, c) => c.Check() | b);
+                ret = Segments.Aggregate(ret, (b, s) => s.Check() | b);
+
+                return ret;
             }
+        }
+
+        public bool Check()
+        {
+            var ret = false;
+            var groupsOfNeighboredMarkedButUnassignedCells = Cells
+                .Where(c => c.State == CellState.Marked && c.Assignment is null)
+                .OrderBy(c => c.Position)
+                .Aggregate(new List<List<ILineCellForLine>>(), (lol, c) =>
+                {
+                    if (lol.None() || lol.Last().Last().Position + 1 < c.Position)
+                        lol.Add(new List<ILineCellForLine> {c});
+                    else
+                        lol.Last().Add(c);
+                    return lol;
+                });
+            foreach (var group in groupsOfNeighboredMarkedButUnassignedCells)
+            {
+                var tooSmallPossibleAssignments =
+                    group
+                        .SelectMany(c => c.PossibleAssignments.Select(s => (s, c)))
+                        .Where(t => t.s.Length < group.Count)
+                        .ToList();
+                if (tooSmallPossibleAssignments.Any())
+                {
+                    ret = true;
+                    foreach (var (s, c) in tooSmallPossibleAssignments)
+                        c.ExcludePossibleAssignment(s);
+                }
+            }
+
+            return ret;
         }
     }
 }

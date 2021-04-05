@@ -31,6 +31,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
     {
         void ExcludePossibleAssignment(ISegment segment);
         void ExcludeAllPossibleAssignments();
+        void MarkWithoutAssignment();
     }
 
     internal class Cell : ModelLayerBase, ICell
@@ -199,6 +200,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             public void ExcludePossibleAssignment(ISegment segment) => PossibleAssignments = PossibleAssignments.Except(segment.ToEnumerable());
 
             public void ExcludeAllPossibleAssignments() => PossibleAssignments = ImmutableHashSet<ISegment>.Empty;
+            public void MarkWithoutAssignment() => Parent.State = CellState.Marked;
         }
 
         private class VerticalLineCell : LineCellBase, IDisposable

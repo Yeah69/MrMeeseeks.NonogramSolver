@@ -127,6 +127,9 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             
             foreach (var group in groupsOfNeighboredMarkedButUnassignedCells)
             {
+                var nextToMaxCell = group.MaxBy(c => c.Position).First().Next as ILineCellForLine;
+                var prevToMinCell = group.MinBy(c => c.Position).First().Previous as ILineCellForLine;
+                
                 var tooSmallPossibleAssignments =
                     group
                         .SelectMany(c => c.PossibleAssignments.Select(s => (s, c)))
@@ -141,15 +144,29 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
 
                 if (group.SelectMany(c => c.PossibleAssignments).All(s => s.Length == group.Count))
                 {
-                    if (group.MaxBy(c => c.Position).First().Next is ILineCellForLine maxCell)
+                    if (nextToMaxCell is not null)
                     {
                         ret = true;
-                        maxCell.ExcludeAllPossibleAssignments();
+                        nextToMaxCell.ExcludeAllPossibleAssignments();
                     }
-                    if (group.MinBy(c => c.Position).First().Previous is ILineCellForLine minCell)
+                    if (prevToMinCell is not null)
                     {
                         ret = true;
-                        minCell.ExcludeAllPossibleAssignments();
+                        prevToMinCell.ExcludeAllPossibleAssignments();
+                    }
+                }
+
+                if ((nextToMaxCell ?? prevToMinCell) is {State: CellState.Excluded})
+                {
+                    var min = @group.SelectMany(c => c.PossibleAssignments)
+                        .Select(s => s.Length)
+                        .Min();
+                    var diff = min - group.Count;
+                    if (diff > 0)
+                    {
+                        ret = true;
+                        if (nextToMaxCell is {State: CellState.Undecided}) nextToMaxCell.MarkWithoutAssignment();
+                        if (prevToMinCell is {State: CellState.Undecided}) prevToMinCell.MarkWithoutAssignment();
                     }
                 }
             }

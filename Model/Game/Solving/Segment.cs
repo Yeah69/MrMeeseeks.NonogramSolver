@@ -210,6 +210,44 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
                     CurrentPossibleCells = CurrentPossibleCells.Except(excludes);
                 }
             }
+
+            var firstMarkedOpenIncluded = CurrentPossibleCells
+                .Where(c => Previous is null || c.PossibleAssignments.Contains(Previous).Not())
+                .Where(c => c.State == CellState.Marked)
+                .MinBy(c => c.Position)
+                .FirstOrDefault();
+
+            if (firstMarkedOpenIncluded is not null)
+            {
+                var excludeMax = firstMarkedOpenIncluded.Position + Length;
+                var excludes = CurrentPossibleCells
+                    .Where(c => c.Position >= excludeMax)
+                    .ToList();
+                if (excludes.Any())
+                {
+                    ret = true;
+                    CurrentPossibleCells = CurrentPossibleCells.Except(excludes);
+                }
+            }
+
+            var lastMarkedOpenIncluded = CurrentPossibleCells
+                .Where(c => Next is null || c.PossibleAssignments.Contains(Next).Not())
+                .Where(c => c.State == CellState.Marked)
+                .MaxBy(c => c.Position)
+                .FirstOrDefault();
+
+            if (lastMarkedOpenIncluded is not null)
+            {
+                var excludeMin = lastMarkedOpenIncluded.Position - Length;
+                var excludes = CurrentPossibleCells
+                    .Where(c => c.Position <= excludeMin)
+                    .ToList();
+                if (excludes.Any())
+                {
+                    ret = true;
+                    CurrentPossibleCells = CurrentPossibleCells.Except(excludes);
+                }
+            }
             
             return ret;
         }

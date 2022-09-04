@@ -17,6 +17,9 @@
         <DataTemplate DataType="{x:Type editing:ITextualGameEditorViewModel}">
             <view:TextualGameEditorView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type editing:IFromImageGameEditorViewModel}">
+            <view:FromImageGameEditorView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type solving:IGameViewModel}">
             <view:GameView />
         </DataTemplate>
@@ -27,6 +30,7 @@
                        LastChildFill="True">
                 <Button DockPanel.Dock="Top" Content="Create New" Command="{Binding CreateNewGame}" />
                 <Button DockPanel.Dock="Top" Content="Create New (Textual)" Command="{Binding CreateNewGameTextual}" />
+                <Button DockPanel.Dock="Top" Content="Create New (From Image)" Command="{Binding CreateNewGameFromImage}" />
                 <ListBox DockPanel.Dock="Bottom"
                          Items="{Binding Games}"
                          SelectionMode="Single"

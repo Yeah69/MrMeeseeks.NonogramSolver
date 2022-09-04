@@ -23,6 +23,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         IGameEditorViewModelBase? Editor { get; }
         void CreateNewGame();
         void CreateNewGameTextual();
+        void CreateNewGameFromImage();
         void CopyAndEdit(IGameViewModel game);
     }
 
@@ -32,6 +33,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         private readonly Func<IGameEditor> _gameEditorFactory;
         private readonly Func<IGameEditor, IGameEditorViewModel> _gameEditorViewModelFactory;
         private readonly Func<ITextualGameEditorViewModel> _textualGameEditorViewModelFactory;
+        private readonly Func<IFromImageGameEditorViewModel> _imageGameExtractionViewModelFactory;
         private IGameViewModel? _selectedGame;
         private IGameEditorViewModelBase? _editor;
 
@@ -44,12 +46,14 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
             Func<IGameEditor> gameEditorFactory,
             Func<IGameEditor, IGameEditorViewModel> gameEditorViewModelFactory,
             Func<ITextualGameEditorViewModel> textualGameEditorViewModelFactory,
+            Func<IFromImageGameEditorViewModel> imageGameExtractionViewModelFactory,
             CompositeDisposable compositeDisposable)
         {
             _gameProject = gameProject;
             _gameEditorFactory = gameEditorFactory;
             _gameEditorViewModelFactory = gameEditorViewModelFactory;
             _textualGameEditorViewModelFactory = textualGameEditorViewModelFactory;
+            _imageGameExtractionViewModelFactory = imageGameExtractionViewModelFactory;
 
             _gameProject
                 .Games
@@ -98,6 +102,13 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         {
 #pragma warning disable 4014 // Fire and forget is intended
             TriggerEditing(_textualGameEditorViewModelFactory());
+#pragma warning restore 4014
+        }
+
+        public void CreateNewGameFromImage()
+        {
+#pragma warning disable 4014 // Fire and forget is intended
+            TriggerEditing(_imageGameExtractionViewModelFactory());
 #pragma warning restore 4014
         }
 

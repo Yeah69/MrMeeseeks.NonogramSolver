@@ -1,5 +1,4 @@
 ﻿using Avalonia;
-using Avalonia.Logging.Serilog;
 
 namespace MrMeeseeks.NonogramSolver.Root
 {
@@ -15,6 +14,6 @@ namespace MrMeeseeks.NonogramSolver.Root
         private static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
-                .LogToDebug();
+                .LogToTrace();
     }
 }

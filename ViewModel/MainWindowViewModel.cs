@@ -1,4 +1,5 @@
 using MrMeeseeks.NonogramSolver.Model.Settings;
+using MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,8 +12,8 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
     {
         string Title { get; }
         IGameProjectViewModelBase Content { get; }
-        Task New();
-        Task Open();
+        Task FileMenuNew();
+        Task FileMenuOpen();
     }
 
     internal class MainWindowViewModel : ViewModelLayerBase, IMainWindowViewModel
@@ -22,20 +23,23 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
         private readonly IMainWindowSaveFileDialog _mainWindowSaveFileDialog;
         private readonly IMainWindowOpenFileDialog _mainWindowOpenFileDialog;
         private readonly Func<string, IGameProjectViewModel> _gameProjectViewModelFactory;
+        private readonly Func<IFromImageGameEditorViewModel> _imageGameExtractionViewModelFactory;
 
         public MainWindowViewModel(
             IEmptyGameProjectViewModel emptyGameProjectViewModel,
             ICurrentSettings currentSettings,
             IMainWindowSaveFileDialog mainWindowSaveFileDialog,
             IMainWindowOpenFileDialog mainWindowOpenFileDialog,
-            Func<string, IGameProjectViewModel> gameProjectViewModelFactory)
+            Func<string, IGameProjectViewModel> gameProjectViewModelFactory,
+            Func<IFromImageGameEditorViewModel> imageGameExtractionViewModelFactory)
         {
             _content = emptyGameProjectViewModel;
             _currentSettings = currentSettings;
             _mainWindowSaveFileDialog = mainWindowSaveFileDialog;
             _mainWindowOpenFileDialog = mainWindowOpenFileDialog;
             _gameProjectViewModelFactory = gameProjectViewModelFactory;
-            
+            _imageGameExtractionViewModelFactory = imageGameExtractionViewModelFactory;
+
             if(File.Exists(currentSettings.Value.LastOpenFileName))
                 Content = _gameProjectViewModelFactory(currentSettings.Value.LastOpenFileName ?? "");
         }
@@ -53,7 +57,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
             }
         }
 
-        public async Task New()
+        public async Task FileMenuNew()
         {
             var initialFileName = "game.db";
             var directory = Environment.CurrentDirectory;
@@ -77,7 +81,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
             _currentSettings.Value.LastOpenFileName = path;
         }
 
-        public async Task Open()
+        public async Task FileMenuOpen()
         {
             var initialFileName = "game.db";
             var directory = Environment.CurrentDirectory;
@@ -96,7 +100,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
                 initialFileName,
                 false,
                 ("LiteDb", new List<string> {"db"}));
-            if (paths.Length == 1)
+            if (paths?.Length == 1)
             {
                 var chosenFileName = paths.First();
                 Content = _gameProjectViewModelFactory(chosenFileName);

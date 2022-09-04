@@ -5,7 +5,7 @@ namespace MrMeeseeks.NonogramSolver.ViewModel
 {
     public interface IOpenFileDialog
     {
-        Task<string[]> Show(
+        Task<string[]?> Show(
             string title, 
             string directory, 
             string initialFileName, 

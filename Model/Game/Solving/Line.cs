@@ -1,4 +1,3 @@
-using MoreLinq;
 using MrMeeseeks.Extensions;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -127,8 +126,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             
             foreach (var group in groupsOfNeighboredMarkedButUnassignedCells)
             {
-                var nextToMaxCell = group.MaxBy(c => c.Position).First().Next as ILineCellForLine;
-                var prevToMinCell = group.MinBy(c => c.Position).First().Previous as ILineCellForLine;
+                var nextToMaxCell = group.MaxBy(c => c.Position)?.Next as ILineCellForLine;
+                var prevToMinCell = group.MinBy(c => c.Position)?.Previous as ILineCellForLine;
                 
                 var tooSmallPossibleAssignments =
                     group
@@ -175,7 +174,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
              && groupsOfNeighboredMarkedButUnassignedCells[0].Count == Segments[0].Length
              && Segments[0].AssignedCells.None() && Segments[1].AssignedCells.None()
              && Cells[groupsOfNeighboredMarkedButUnassignedCells[0].Count].State == CellState.Undecided
-             && groupsOfNeighboredMarkedButUnassignedCells[0].MinBy(c => c.Position).First().Position ==
+             && groupsOfNeighboredMarkedButUnassignedCells[0].MinBy(c => c.Position)?.Position ==
                 groupsOfNeighboredMarkedButUnassignedCells.Count + 1)
             {
                 ret = true;
@@ -187,7 +186,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
              && groupsOfNeighboredMarkedButUnassignedCells[^1].Count == Segments[^1].Length
              && Segments[^1].AssignedCells.None() && Segments[^2].AssignedCells.None()
              && Cells[^(groupsOfNeighboredMarkedButUnassignedCells[^1].Count + 1)].State == CellState.Undecided
-             && groupsOfNeighboredMarkedButUnassignedCells[^1].MaxBy(c => c.Position).First().Position ==
+             && groupsOfNeighboredMarkedButUnassignedCells[^1].MaxBy(c => c.Position)?.Position ==
                 Cells.Count - groupsOfNeighboredMarkedButUnassignedCells.Count - 2)
             {
                 ret = true;

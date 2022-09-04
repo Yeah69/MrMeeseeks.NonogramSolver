@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:editing="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;assembly=MrMeeseeks.NonogramSolver.ViewModel"
+             xmlns:view="clr-namespace:MrMeeseeks.NonogramSolver.View"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MrMeeseeks.NonogramSolver.View.FromImageGameEditorView"
+             d:DataContext="{d:DesignInstance editing:IFromImageGameEditorViewModel}" 
+             DragDrop.AllowDrop="True">
+    <UserControl.Resources>
+        <view:PathToImageSourceConverter x:Key="PathToImageSourceConverter" />
+    </UserControl.Resources>
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Name:" Margin="5, 2" VerticalAlignment="Center" FontSize="20" />
+            <TextBox Text="{Binding Name}" Margin="5, 2" FontSize="20" />
+            <TextBlock Text="Image:" Margin="5, 2" VerticalAlignment="Center" FontSize="20" />
+            <TextBox Text="{Binding ImagePath}" Margin="5, 2" FontSize="20" />
+            <Button Content="Browse" Command="{Binding Browse}" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+            <Button Content="Okay" Command="{Binding Okay}" />
+            <Button Content="Cancel" Command="{Binding Cancel}" />
+        </StackPanel>
+        <Image DockPanel.Dock="Top" Source="{Binding ImagePath, Converter={StaticResource PathToImageSourceConverter}}" />
+    </DockPanel>
+</UserControl>

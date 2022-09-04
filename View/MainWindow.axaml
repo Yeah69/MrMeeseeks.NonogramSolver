@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModel="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel;assembly=MrMeeseeks.NonogramSolver.ViewModel"
         xmlns:view="clr-namespace:MrMeeseeks.NonogramSolver.View"
+        xmlns:editing="clr-namespace:MrMeeseeks.NonogramSolver.ViewModel.Game.Editing;assembly=MrMeeseeks.NonogramSolver.ViewModel"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MrMeeseeks.NonogramSolver.View.MainWindow"
         Title="{Binding Title}"
@@ -14,8 +15,8 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Margin="2" Text="No project active yet. Please open an existing or create a new one." />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Margin="2" Content="Create New" Command="{Binding DataContext.New, ElementName=This}" />
-                    <Button Margin="2" Content="Open Existing" Command="{Binding DataContext.Open, ElementName=This}" />
+                    <Button Margin="2" Content="Create New" Command="{Binding DataContext.FileMenuNew, ElementName=This}" />
+                    <Button Margin="2" Content="Open Existing" Command="{Binding DataContext.FileMenuOpen, ElementName=This}" />
                 </StackPanel>
             </StackPanel>
         </DataTemplate>
@@ -26,8 +27,8 @@
     <DockPanel LastChildFill="True">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New" Command="{Binding New}" />
-                <MenuItem Header="_Open" Command="{Binding Open}" />
+                <MenuItem Header="_New" Command="{Binding FileMenuNew}" />
+                <MenuItem Header="_Open" Command="{Binding FileMenuOpen}" />
             </MenuItem>
             <MenuItem Header="_Game">
                 <MenuItem Header="_Solve" Command="{Binding Content.Solve}" IsEnabled="{Binding Content.IsGamesVisible}" />

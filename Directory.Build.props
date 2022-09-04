@@ -4,7 +4,8 @@
         <Version>$(MinVerVersion)</Version>
         <Authors>Dimitri Enns</Authors>
         <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
-        <LangVersion>9</LangVersion>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>nullable</WarningsAsErrors>
     </PropertyGroup>

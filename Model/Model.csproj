@@ -1,19 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>MrMeeseeks.NonogramSolver.Model</RootNamespace>
         <AssemblyName>$(RootNamespace)</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MinVer" Version="2.4.0">
+      <PackageReference Include="IronOcr" Version="2022.8.8198" />
+      <PackageReference Include="MinVer" Version="4.2.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="morelinq" Version="3.3.2" />
-      <PackageReference Include="MrMeeseeks" Version="69.0.17" />
-      <PackageReference Include="MrMeeseeks.Windows" Version="69.0.17" />
+      <PackageReference Include="MrMeeseeks" Version="69.0.25" />
+      <PackageReference Include="MrMeeseeks.Windows" Version="69.0.25" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
+      <PackageReference Include="SkiaSharp" Version="2.88.1" />
     </ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>MrMeeseeks.NonogramSolver.View</RootNamespace>
         <AssemblyName>$(RootNamespace)</AssemblyName>
     </PropertyGroup>
@@ -27,12 +26,17 @@
         <DependentUpon>TextualGameEditorView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="ImageGameExtraction.axaml.cs">
+        <DependentUpon>ImageGameExtraction.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Avalonia" Version="0.9.12" />
-      <PackageReference Include="Avalonia.Desktop" Version="0.9.12" />
-      <PackageReference Include="MinVer" Version="2.4.0">
+      <PackageReference Include="Avalonia" Version="0.10.18" />
+      <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+      <PackageReference Include="Avalonia.Diagnostics" Version="0.10.18" />
+      <PackageReference Include="MinVer" Version="4.2.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>

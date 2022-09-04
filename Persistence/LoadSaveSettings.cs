@@ -23,7 +23,7 @@ namespace MrMeeseeks.NonogramSolver.Persistence
                 ? JsonConvert.DeserializeObject<Settings>(File.ReadAllText(_filePath))
                 : new Settings(null);
             var settings = _settingsFactory(this);
-            settings.LastOpenFileName = settingsDto.LastOpenFileName;
+            settings.LastOpenFileName = settingsDto?.LastOpenFileName;
             if (File.Exists(_filePath).Not())
                 Save(settings);
             return settings;

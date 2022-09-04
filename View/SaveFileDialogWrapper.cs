@@ -21,7 +21,7 @@ namespace MrMeeseeks.NonogramSolver.View
             _lazyWindow = lazyWindow;
         }
 
-        public Task<string> Show(
+        public Task<string?> Show(
             string title, 
             string directory, 
             string initialFileName, 

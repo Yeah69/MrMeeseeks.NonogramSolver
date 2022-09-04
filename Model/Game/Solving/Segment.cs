@@ -1,4 +1,3 @@
-using MoreLinq;
 using MrMeeseeks.Extensions;
 using System;
 using System.Collections.Generic;
@@ -59,8 +58,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             private set
             {
                 _currentPossibleCells = value;
-                CurrentPossibleMaxCell = _currentPossibleCells.MaxBy(c => c.Position).FirstOrDefault();
-                CurrentPossibleMinCell = _currentPossibleCells.MinBy(c => c.Position).FirstOrDefault();
+                CurrentPossibleMaxCell = _currentPossibleCells.MaxBy(c => c.Position);
+                CurrentPossibleMinCell = _currentPossibleCells.MinBy(c => c.Position);
             }
         }
 
@@ -87,8 +86,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             private set
             {
                 _assignedCells = value;
-                CurrentMaxCell = _assignedCells.MaxBy(c => c.Position).FirstOrDefault();
-                CurrentMinCell = _assignedCells.MinBy(c => c.Position).FirstOrDefault();
+                CurrentMaxCell = _assignedCells.MaxBy(c => c.Position);
+                CurrentMinCell = _assignedCells.MinBy(c => c.Position);
 
                 // as soon as cleared exclude neighbors
                 if (Cleared) OnPropertyChanged(nameof(Cleared));
@@ -145,8 +144,8 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             {
                 ret = true;
                 var newAssignedCells = ImmutableHashSet.Create(AssignedCells.Concat(unknownAssignedCells).ToArray());
-                var minPosition = newAssignedCells.MinBy(c => c.Position).First().Position;
-                var maxPosition = newAssignedCells.MaxBy(c => c.Position).First().Position;
+                var minPosition = newAssignedCells.MinBy(c => c.Position)?.Position;
+                var maxPosition = newAssignedCells.MaxBy(c => c.Position)?.Position;
                 newAssignedCells = CurrentPossibleCells
                     .Where(c => newAssignedCells.Contains(c).Not() && c.Position >= minPosition &&
                                 c.Position <= maxPosition)
@@ -214,8 +213,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             var firstMarkedOpenIncluded = CurrentPossibleCells
                 .Where(c => Previous is null || c.PossibleAssignments.Contains(Previous).Not())
                 .Where(c => c.State == CellState.Marked)
-                .MinBy(c => c.Position)
-                .FirstOrDefault();
+                .MinBy(c => c.Position);
 
             if (firstMarkedOpenIncluded is not null)
             {
@@ -233,8 +231,7 @@ namespace MrMeeseeks.NonogramSolver.Model.Game.Solving
             var lastMarkedOpenIncluded = CurrentPossibleCells
                 .Where(c => Next is null || c.PossibleAssignments.Contains(Next).Not())
                 .Where(c => c.State == CellState.Marked)
-                .MaxBy(c => c.Position)
-                .FirstOrDefault();
+                .MaxBy(c => c.Position);
 
             if (lastMarkedOpenIncluded is not null)
             {

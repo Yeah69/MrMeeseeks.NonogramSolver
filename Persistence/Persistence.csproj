@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>MrMeeseeks.NonogramSolver.Persistence</RootNamespace>
         <AssemblyName>$(RootNamespace)</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="LiteDB" Version="5.0.9" />
-      <PackageReference Include="MinVer" Version="2.4.0">
+      <PackageReference Include="LiteDB" Version="5.0.12" />
+      <PackageReference Include="MinVer" Version="4.2.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>

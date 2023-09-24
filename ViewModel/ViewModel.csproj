@@ -16,7 +16,7 @@
       <PackageReference Include="MrMeeseeks" Version="69.0.25" />
       <PackageReference Include="MrMeeseeks.Reactive" Version="69.0.25" />
       <PackageReference Include="MrMeeseeks.Windows" Version="69.0.25" />
-      <PackageReference Include="SkiaSharp" Version="2.88.1" />
+      <PackageReference Include="SkiaSharp" Version="2.88.6" />
     </ItemGroup>
 
     <ItemGroup>
